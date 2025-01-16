@@ -35,6 +35,7 @@ Partial Class frmMain
         Me.mnuFile = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFileOpen = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripMenuItem2 = New System.Windows.Forms.ToolStripSeparator()
+        Me.mnuFileExport = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFilePrint = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFilePrintPreview = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripMenuItem1 = New System.Windows.Forms.ToolStripSeparator()
@@ -200,7 +201,7 @@ Partial Class frmMain
         '
         'mnuFile
         '
-        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.ToolStripMenuItem2, Me.mnuFilePrint, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
+        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.ToolStripMenuItem2, Me.mnuFileExport, Me.mnuFilePrint, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
         Me.mnuFile.Name = "mnuFile"
         Me.mnuFile.Size = New System.Drawing.Size(37, 20)
         Me.mnuFile.Text = "&File"
@@ -215,6 +216,12 @@ Partial Class frmMain
         '
         Me.ToolStripMenuItem2.Name = "ToolStripMenuItem2"
         Me.ToolStripMenuItem2.Size = New System.Drawing.Size(149, 6)
+        '
+        'mnuFileExport
+        '
+        Me.mnuFileExport.Name = "mnuFileExport"
+        Me.mnuFileExport.Size = New System.Drawing.Size(152, 22)
+        Me.mnuFileExport.Text = "&Export..."
         '
         'mnuFilePrint
         '
@@ -549,6 +556,7 @@ Partial Class frmMain
     Friend WithEvents mnuFile As ToolStripMenuItem
     Friend WithEvents mnuFileOpen As ToolStripMenuItem
     Friend WithEvents ToolStripMenuItem2 As ToolStripSeparator
+    Friend WithEvents mnuFileExport As ToolStripMenuItem
     Friend WithEvents mnuFilePrint As ToolStripMenuItem
     Friend WithEvents mnuFilePrintPreview As ToolStripMenuItem
     Friend WithEvents ToolStripMenuItem1 As ToolStripSeparator
