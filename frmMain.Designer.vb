@@ -222,18 +222,21 @@ Partial Class frmMain
         Me.mnuFileExport.Name = "mnuFileExport"
         Me.mnuFileExport.Size = New System.Drawing.Size(152, 22)
         Me.mnuFileExport.Text = "&Export..."
+        Me.mnuFileExport.Enabled = False
         '
         'mnuFilePrint
         '
         Me.mnuFilePrint.Name = "mnuFilePrint"
         Me.mnuFilePrint.Size = New System.Drawing.Size(152, 22)
         Me.mnuFilePrint.Text = "&Print..."
+        Me.mnuFilePrint.Enabled = False
         '
         'mnuFilePrintPreview
         '
         Me.mnuFilePrintPreview.Name = "mnuFilePrintPreview"
         Me.mnuFilePrintPreview.Size = New System.Drawing.Size(152, 22)
         Me.mnuFilePrintPreview.Text = "P&rint Preview..."
+        Me.mnuFilePrintPreview.Enabled = False
         '
         'ToolStripMenuItem1
         '

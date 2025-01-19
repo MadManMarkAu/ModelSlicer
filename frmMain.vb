@@ -183,6 +183,10 @@ Public Class frmMain
         lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
         lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M²"
 
+        mnuFileExport.Enabled = True
+        mnuFilePrint.Enabled = True
+        mnuFilePrintPreview.Enabled = True
+
         lbObjects.DataSource = m_gGeometry.Groups
     End Sub
 
