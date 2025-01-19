@@ -124,8 +124,10 @@ Public Class Geometry
     ''' Loads a Wavefront OBJ file (*.obj) from a file.
     ''' </summary>
     ''' <param name="strFileName">The obj file to load.</param>
+    ''' <param name="scale">The scale factor to use.</param>
+    ''' <param name="zUp">If the model is z up or y up.</param>
     ''' <returns>A <see cref="Geometry"/> object describing the model.</returns>
-    Public Shared Function LoadWavefrontObj(strFileName As String) As Geometry
+    Public Shared Function LoadWavefrontObj(strFileName As String, scale As Decimal, zUp As Boolean) As Geometry
         Dim gOutput As New Geometry
 
         Dim strLine As String
@@ -165,14 +167,22 @@ Public Class Geometry
 
                         Case "v"
                             If astrParts.Length >= 4 AndAlso Single.TryParse(astrParts(1), sngPart1) AndAlso Single.TryParse(astrParts(2), sngPart2) AndAlso Single.TryParse(astrParts(3), sngPart3) Then
-                                lstVerts.Add(New Vector3(sngPart1, sngPart2, -sngPart3))
+                                If zUp Then
+                                    lstVerts.Add(New Vector3(sngPart1*scale, sngPart3*scale, -sngPart2*scale))
+                                Else
+                                    lstVerts.Add(New Vector3(sngPart1*scale, sngPart2*scale, -sngPart3*scale))
+                                End If
                             Else
                                 Throw New ApplicationException("Vertex data had less than 3 elements, or one of the elements was non-numeric")
                             End If
 
                         Case "vn"
                             If astrParts.Length >= 4 AndAlso Single.TryParse(astrParts(1), sngPart1) AndAlso Single.TryParse(astrParts(2), sngPart2) AndAlso Single.TryParse(astrParts(3), sngPart3) Then
-                                lstNorms.Add(New Vector3(sngPart1, sngPart2, -sngPart3))
+                                If zUp Then
+                                    lstNorms.Add(New Vector3(sngPart1*scale, sngPart3*scale, -sngPart2*scale))
+                                Else
+                                    lstNorms.Add(New Vector3(sngPart1*scale, sngPart2*scale, -sngPart3*scale))
+                                End If
                             Else
                                 Throw New Exception()
                             End If

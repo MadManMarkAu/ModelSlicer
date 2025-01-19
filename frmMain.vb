@@ -1,10 +1,13 @@
 ﻿Imports System.ComponentModel
+Imports System.IO
+Imports System.Xml
 
 Public Class frmMain
     Private m_gGeometry As Geometry
     Private m_gtgSelectedObject As GeometryTriangleGroup
     Private WithEvents m_bwSlicer As New BackgroundWorker With {.WorkerReportsProgress = True}
     Private m_lstLayers As List(Of Layer)
+    Private WithEvents m_importForm As Form
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         'mdFront.ViewMatrix = Matrix.Identity() ' .RotationY(Math.PI)
@@ -23,7 +26,7 @@ Public Class frmMain
             ofdOpen.Title = "Open Model File"
             ofdOpen.Filter = "Wavefront OBJ Files|*.obj|All Files (*.*)|*.*"
             If ofdOpen.ShowDialog(Me) = DialogResult.OK Then
-                Call OpenModelFile(ofdOpen.FileName)
+                Call showImportForm(ofdOpen.FileName)
             End If
         End Using
     End Sub
@@ -38,7 +41,7 @@ Public Class frmMain
         mnuFilePrintPreview.Enabled = False
         tspbProgress.Visible = True
 
-        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value) / 1000, Color.Red, Color.Blue, Color.LightGray))
+        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray))
     End Sub
 
     Private Sub mnuFileExit_Click(sender As Object, e As EventArgs) Handles mnuFileExit.Click
@@ -119,23 +122,52 @@ Public Class frmMain
         End If
     End Sub
 
-    Private Sub OpenModelFile(strFile As String)
+    Private Sub m_importForm_FormClosed(sender as Object, e as FormClosedEventArgs) Handles m_importForm.FormClosed
+        Dim importForm As Form = DirectCast(sender, Form)
+
+        If importForm.DialogResult = DialogResult.OK Then
+            Dim zUpRadioButton As RadioButton = DirectCast(importForm.Controls(2), RadioButton)
+            Dim zUp As Boolean = zUpRadioButton.Checked
+
+            Dim unitsComboBox As ComboBox = DirectCast(importForm.Controls(4), ComboBox)
+            Dim units As String = unitsComboBox.SelectedItem.ToString()
+            Dim scale As Decimal
+            Select Case units
+                Case "mm"
+                    scale = 1
+                Case "cm"
+                    scale = 10
+                Case "m"
+                    scale = 1000
+                Case "in"
+                    scale = 25.4
+                Case "ft"
+                    scale = 304.8
+            End Select
+
+            Dim filePath As Label = DirectCast(importForm.Controls(7), Label)
+
+            Call OpenModelFile(filePath.Text, scale, zUp)
+        End If
+    End Sub
+
+    Private Sub OpenModelFile(strFile As String, scale As Decimal, zUp As Boolean)
         Dim decTotalHeight As Decimal
         Dim decTotalWidth As Decimal
         Dim decTotalDepth As Decimal
         Dim decTotalArea As Decimal
 
-        m_gGeometry = Geometry.LoadWavefrontObj(strFile)
+        m_gGeometry = Geometry.LoadWavefrontObj(strFile, scale, zUp)
 
-        decTotalHeight = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height).Sum() * 1000
-        decTotalWidth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Width).Sum() * 1000
-        decTotalDepth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Depth).Sum() * 1000
-        decTotalArea = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height * gtgPart.Bounds.Width * gtgPart.Bounds.Depth).Sum()
+        decTotalHeight = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height).Sum()
+        decTotalWidth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Width).Sum()
+        decTotalDepth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Depth).Sum()
+        decTotalArea = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height * gtgPart.Bounds.Width * gtgPart.Bounds.Depth).Sum() / 1000000000
 
         lblTotalHeight.Text = decTotalHeight.ToString("#,##0") & " mm"
         lblTotalWidth.Text = decTotalWidth.ToString("#,##0") & " mm"
         lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
-        lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M²"
+        lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M³"
 
         lbObjects.DataSource = m_gGeometry.Groups
     End Sub
@@ -153,10 +185,10 @@ Public Class frmMain
             mdBottom.ModelMatrix = mModelMatrix
             mdIso.ModelMatrix = mModelMatrix * Matrix.Scale(1 / 1.212)
 
-            lblHeight.Text = (m_gtgSelectedObject.Bounds.Height * 1000).ToString("#,##0") & " mm"
-            lblWidth.Text = (m_gtgSelectedObject.Bounds.Width * 1000).ToString("#,##0") & " mm"
-            lblDepth.Text = (m_gtgSelectedObject.Bounds.Depth * 1000).ToString("#,##0") & " mm"
-            lblVolume.Text = (m_gtgSelectedObject.Bounds.Height * m_gtgSelectedObject.Bounds.Width * m_gtgSelectedObject.Bounds.Depth).ToString("#,##0.000") & " M²"
+            lblHeight.Text = (m_gtgSelectedObject.Bounds.Height).ToString("#,##0") & " mm"
+            lblWidth.Text = (m_gtgSelectedObject.Bounds.Width).ToString("#,##0") & " mm"
+            lblDepth.Text = (m_gtgSelectedObject.Bounds.Depth).ToString("#,##0") & " mm"
+            lblVolume.Text = (m_gtgSelectedObject.Bounds.Height * m_gtgSelectedObject.Bounds.Width * m_gtgSelectedObject.Bounds.Depth / 1000000000).ToString("#,##0.000") & " M³"
         Else
             lblHeight.Text = String.Empty
             lblWidth.Text = String.Empty
@@ -170,7 +202,7 @@ Public Class frmMain
 
     Private Sub UpdateTrackBar()
         If m_gtgSelectedObject IsNot Nothing Then
-            Dim intNumSlices As Integer = Math.Ceiling(m_gtgSelectedObject.Bounds.Height * 1000 / nudThickness.Value)
+            Dim intNumSlices As Integer = Math.Ceiling(m_gtgSelectedObject.Bounds.Height / nudThickness.Value)
             tbSlice.Maximum = intNumSlices
             lblSlices.Text = intNumSlices
         Else
@@ -194,8 +226,8 @@ Public Class frmMain
         Dim glgSilhouette As GeometryLineGroup
 
         If m_gtgSelectedObject IsNot Nothing Then
-            vSliceStart = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) / 1000 * (tbSlice.Value + 1), 0)
-            vSliceEnd = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) / 1000 * tbSlice.Value, 0)
+            vSliceStart = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * (tbSlice.Value + 1), 0)
+            vSliceEnd = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * tbSlice.Value, 0)
             vSliceDir = New Vector3(0, -1, 0)
 
             gtgSlice = Slicer.ExtractBetweenPlanes(m_gtgSelectedObject, vSliceStart, vSliceEnd, vSliceDir)
@@ -220,6 +252,75 @@ Public Class frmMain
             mdBottom.SetDrawData()
             mdIso.SetDrawData()
         End If
+    End Sub
+
+    Private Sub showImportForm(strFile As String)
+        m_importForm = New Form()
+        Dim pathAry() As String = strFile.Split("\")
+        m_importForm.Text = "Importing " & pathAry(pathAry.Length-1)
+        m_importForm.autoSize = True
+        m_importForm.AutoSizeMode = AutoSizeMode.GrowAndShrink
+        m_importForm.FormBorderStyle = FormBorderStyle.FixedDialog
+        m_importForm.MaximizeBox = False
+        m_importForm.MinimizeBox = False
+        m_importForm.StartPosition = FormStartPosition.CenterParent
+        m_importForm.Padding = New Padding(10)
+
+        Dim lblUpAxis As New Label()
+        lblUpAxis.Text = "Up axis:"
+        lblUpAxis.Location = New Point(10, 12)
+        lblUpAxis.AutoSize = True
+        m_importForm.Controls.Add(lblUpAxis)
+
+        Dim yUpRadioButton As New RadioButton()
+        yUpRadioButton.Text = "Y-Up"
+        yUpRadioButton.Location = New Point(60, 10)
+        yUpRadioButton.Checked = True
+        yUpRadioButton.AutoSize = True
+        m_importForm.Controls.Add(yUpRadioButton)
+
+        Dim zUpRadioButton As New RadioButton()
+        zUpRadioButton.Text = "Z-Up"
+        zUpRadioButton.Location = New Point(yUpRadioButton.Left + yUpRadioButton.Width + 10, yUpRadioButton.Top)
+        zUpRadioButton.AutoSize = True
+        m_importForm.Controls.Add(zUpRadioButton)
+
+        Dim lblUnits As New Label()
+        lblUnits.Text = "Units:"
+        lblUnits.Location = New Point(10, 37)
+        lblUnits.AutoSize = True
+        m_importForm.Controls.Add(lblUnits)
+
+        Dim unitsComboBox As New ComboBox()
+        unitsComboBox.Items.Add("mm")
+        unitsComboBox.Items.Add("cm")
+        unitsComboBox.Items.Add("m")
+        unitsComboBox.Items.Add("in")
+        unitsComboBox.Items.Add("ft")
+        unitsComboBox.SelectedIndex = 0
+        unitsComboBox.Location = New Point(60, 35)
+        m_importForm.Controls.Add(unitsComboBox)
+
+        Dim cancelButton As New Button()
+        cancelButton.Text = "Cancel"
+        cancelButton.DialogResult = DialogResult.Cancel
+        cancelButton.Location = New Point(10, 65)
+        m_importForm.CancelButton = cancelButton
+        m_importForm.Controls.Add(cancelButton)
+
+        Dim okButton As New Button()
+        okButton.Text = "OK"
+        okButton.DialogResult = DialogResult.OK
+        okButton.Location = New Point(100, 65)
+        m_importForm.AcceptButton = okButton
+        m_importForm.Controls.Add(okButton)
+
+        Dim filePath As New Label()
+        filePath.Text = strFile
+        filePath.Visible = False
+        m_importForm.Controls.Add(filePath)
+
+        m_importForm.ShowDialog()
     End Sub
 
     Private Class SliceArgs
