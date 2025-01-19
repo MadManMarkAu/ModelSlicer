@@ -2,6 +2,16 @@
 
 Public Class Geometry
     Private m_bbBounds As BoundingBox
+    Private m_scale As Decimal
+    Private m_zUp As Boolean
+
+    public sub change_scale(new_scale As Decimal)
+        m_scale = new_scale
+    End sub
+
+    ''' <summary>
+    ''' Creates a new instance of the <see cref="Geometry"/> class.
+    ''' </
 
     ''' <summary>
     ''' Describes the objects contained in the geometry data
@@ -129,6 +139,8 @@ Public Class Geometry
     ''' <returns>A <see cref="Geometry"/> object describing the model.</returns>
     Public Shared Function LoadWavefrontObj(strFileName As String, scale As Decimal, zUp As Boolean) As Geometry
         Dim gOutput As New Geometry
+
+        gOutput.m_scale = scale
 
         Dim strLine As String
         Dim astrParts() As String

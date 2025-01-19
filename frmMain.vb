@@ -7,7 +7,8 @@ Public Class frmMain
     Private m_gtgSelectedObject As GeometryTriangleGroup
     Private WithEvents m_bwSlicer As New BackgroundWorker With {.WorkerReportsProgress = True}
     Private m_lstLayers As List(Of Layer)
-    Private WithEvents m_importForm As Form
+    Private m_scale As Decimal
+    Private m_zUp As Boolean
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         'mdFront.ViewMatrix = Matrix.Identity() ' .RotationY(Math.PI)
@@ -26,7 +27,7 @@ Public Class frmMain
             ofdOpen.Title = "Open Model File"
             ofdOpen.Filter = "Wavefront OBJ Files|*.obj|All Files (*.*)|*.*"
             If ofdOpen.ShowDialog(Me) = DialogResult.OK Then
-                Call showImportForm(ofdOpen.FileName)
+                OpenModelFile(ofdOpen.FileName)
             End If
         End Using
     End Sub
@@ -58,6 +59,32 @@ Public Class frmMain
 
     Private Sub nudThickness_ValueChanged(sender As Object, e As EventArgs) Handles nudThickness.ValueChanged
         Call UpdateTrackBar()
+        Call UpdateDisplay()
+    End Sub
+
+    Private Sub zUpRadioButton_CheckedChanged(sender As Object, e As EventArgs) Handles zUpRadioButton.CheckedChanged
+        m_zUp = zUpRadioButton.Checked
+
+        Call ReloadModelFile()
+        Call UpdateDisplay()
+    End Sub
+
+    Private Sub unitsComboBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles unitsComboBox.SelectedIndexChanged
+        Dim units As String = unitsComboBox.SelectedItem.ToString()
+        Select Case units
+            Case "Millimeters"
+                m_scale = 1
+            Case "Centimeters"
+                m_scale = 10
+            Case "Meters"
+                m_scale = 1000
+            Case "Inches"
+                m_scale = 25.4
+            Case "Feet"
+                m_scale = 304.8
+        End Select
+
+        Call ReloadModelFile()
         Call UpdateDisplay()
     End Sub
 
@@ -166,42 +193,20 @@ Public Class frmMain
         End If
     End Sub
 
-    Private Sub m_importForm_FormClosed(sender as Object, e as FormClosedEventArgs) Handles m_importForm.FormClosed
-        Dim importForm As Form = DirectCast(sender, Form)
-
-        If importForm.DialogResult = DialogResult.OK Then
-            Dim zUpRadioButton As RadioButton = DirectCast(importForm.Controls(2), RadioButton)
-            Dim zUp As Boolean = zUpRadioButton.Checked
-
-            Dim unitsComboBox As ComboBox = DirectCast(importForm.Controls(4), ComboBox)
-            Dim units As String = unitsComboBox.SelectedItem.ToString()
-            Dim scale As Decimal
-            Select Case units
-                Case "mm"
-                    scale = 1
-                Case "cm"
-                    scale = 10
-                Case "m"
-                    scale = 1000
-                Case "in"
-                    scale = 25.4
-                Case "ft"
-                    scale = 304.8
-            End Select
-
-            Dim filePath As Label = DirectCast(importForm.Controls(7), Label)
-
-            Call OpenModelFile(filePath.Text, scale, zUp)
+    Private Sub ReloadModelFile()
+        If tsslFile.Text = "No File Loaded" Or tsslFile.Text = "" Then
+            Exit Sub
         End If
+        Call OpenModelFile(tsslFile.Text)
     End Sub
 
-    Private Sub OpenModelFile(strFile As String, scale As Decimal, zUp As Boolean)
+    Private Sub OpenModelFile(strFile As String)
         Dim decTotalHeight As Decimal
         Dim decTotalWidth As Decimal
         Dim decTotalDepth As Decimal
         Dim decTotalArea As Decimal
 
-        m_gGeometry = Geometry.LoadWavefrontObj(strFile, scale, zUp)
+        m_gGeometry = Geometry.LoadWavefrontObj(strFile, m_scale, m_zUp)
 
         decTotalHeight = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height).Sum()
         decTotalWidth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Width).Sum()
@@ -212,6 +217,8 @@ Public Class frmMain
         lblTotalWidth.Text = decTotalWidth.ToString("#,##0") & " mm"
         lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
         lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M³"
+
+        tsslFile.Text = strFile
 
         mnuFileExport.Enabled = True
         mnuFilePrint.Enabled = True
@@ -300,75 +307,6 @@ Public Class frmMain
             mdBottom.SetDrawData()
             mdIso.SetDrawData()
         End If
-    End Sub
-
-    Private Sub showImportForm(strFile As String)
-        m_importForm = New Form()
-        Dim pathAry() As String = strFile.Split("\")
-        m_importForm.Text = "Importing " & pathAry(pathAry.Length-1)
-        m_importForm.autoSize = True
-        m_importForm.AutoSizeMode = AutoSizeMode.GrowAndShrink
-        m_importForm.FormBorderStyle = FormBorderStyle.FixedDialog
-        m_importForm.MaximizeBox = False
-        m_importForm.MinimizeBox = False
-        m_importForm.StartPosition = FormStartPosition.CenterParent
-        m_importForm.Padding = New Padding(10)
-
-        Dim lblUpAxis As New Label()
-        lblUpAxis.Text = "Up axis:"
-        lblUpAxis.Location = New Point(10, 12)
-        lblUpAxis.AutoSize = True
-        m_importForm.Controls.Add(lblUpAxis)
-
-        Dim yUpRadioButton As New RadioButton()
-        yUpRadioButton.Text = "Y-Up"
-        yUpRadioButton.Location = New Point(60, 10)
-        yUpRadioButton.Checked = True
-        yUpRadioButton.AutoSize = True
-        m_importForm.Controls.Add(yUpRadioButton)
-
-        Dim zUpRadioButton As New RadioButton()
-        zUpRadioButton.Text = "Z-Up"
-        zUpRadioButton.Location = New Point(yUpRadioButton.Left + yUpRadioButton.Width + 10, yUpRadioButton.Top)
-        zUpRadioButton.AutoSize = True
-        m_importForm.Controls.Add(zUpRadioButton)
-
-        Dim lblUnits As New Label()
-        lblUnits.Text = "Units:"
-        lblUnits.Location = New Point(10, 37)
-        lblUnits.AutoSize = True
-        m_importForm.Controls.Add(lblUnits)
-
-        Dim unitsComboBox As New ComboBox()
-        unitsComboBox.Items.Add("mm")
-        unitsComboBox.Items.Add("cm")
-        unitsComboBox.Items.Add("m")
-        unitsComboBox.Items.Add("in")
-        unitsComboBox.Items.Add("ft")
-        unitsComboBox.SelectedIndex = 0
-        unitsComboBox.Location = New Point(60, 35)
-        m_importForm.Controls.Add(unitsComboBox)
-
-        Dim cancelButton As New Button()
-        cancelButton.Text = "Cancel"
-        cancelButton.DialogResult = DialogResult.Cancel
-        cancelButton.Location = New Point(10, 65)
-        m_importForm.CancelButton = cancelButton
-        m_importForm.Controls.Add(cancelButton)
-
-        Dim okButton As New Button()
-        okButton.Text = "OK"
-        okButton.DialogResult = DialogResult.OK
-        okButton.Location = New Point(100, 65)
-        m_importForm.AcceptButton = okButton
-        m_importForm.Controls.Add(okButton)
-
-        Dim filePath As New Label()
-        filePath.Text = strFile
-        filePath.Visible = False
-        m_importForm.Controls.Add(filePath)
-
-        m_importForm.ShowDialog()
     End Sub
 
     Private Class SliceArgs
