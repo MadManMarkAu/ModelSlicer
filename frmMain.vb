@@ -1,41 +1,250 @@
-﻿' The main display form of the app
+﻿Imports System.ComponentModel
+
 Public Class frmMain
-    Private m_gGeometry As Geometry ' Class variable to store model geometry
+    Private m_gGeometry As Geometry
+    Private m_gtgSelectedObject As GeometryTriangleGroup
+    Private WithEvents m_bwSlicer As New BackgroundWorker With {.WorkerReportsProgress = True}
+    Private m_lstLayers As List(Of Layer)
 
-    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Load the Utah Teapot geometry
-        m_gGeometry = Geometry.LoadWavefrontObj("teapot.obj")
+    Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        'mdFront.ViewMatrix = Matrix.Identity() ' .RotationY(Math.PI)
+        'mdRight.ViewMatrix = Matrix.RotationY(-Math.PI / 2)
+        'mdBottom.ViewMatrix = Matrix.RotationX(Math.PI / 2)
+        'mdIso.ViewMatrix = Matrix.RotationY(Math.PI)
 
-        ' Inform the line drawing control about the area we expect line data to be contain within
-        ldDrawer.ViewBounds = New RectangleF(m_gGeometry.Bounds.Minimum.X, m_gGeometry.Bounds.Minimum.Z, m_gGeometry.Bounds.Width, m_gGeometry.Bounds.Depth)
+        mdFront.ViewQuaternion = Quaternion.Identity()
+        mdRight.ViewQuaternion = New Quaternion(New Vector3(0, 1, 0), -Math.PI / 2)
+        mdBottom.ViewQuaternion = New Quaternion(New Vector3(1, 0, 0), Math.PI / 2)
+        mdIso.ViewQuaternion = Quaternion.Identity() ' New Quaternion(New Vector3(0, 1, 0), Math.PI)
+    End Sub
 
-        ' Set the min, max and current value of the slider control
-        ' Note we multiply by 100, as the slider control only takes integers
-        tbSlice.Minimum = m_gGeometry.Bounds.Minimum.Y * 100
-        tbSlice.Maximum = m_gGeometry.Bounds.Maximum.Y * 100
-        tbSlice.Value = m_gGeometry.Bounds.Minimum.Y * 100
+    Private Sub mnuFileOpen_Click(sender As Object, e As EventArgs) Handles mnuFileOpen.Click
+        Using ofdOpen As New OpenFileDialog
+            ofdOpen.Title = "Open Model File"
+            ofdOpen.Filter = "Wavefront OBJ Files|*.obj|All Files (*.*)|*.*"
+            If ofdOpen.ShowDialog(Me) = DialogResult.OK Then
+                Call OpenModelFile(ofdOpen.FileName)
+            End If
+        End Using
+    End Sub
 
-        ' App just loaded, we need to update the display
+    Private Sub mnuFilePrint_Click(sender As Object, e As EventArgs) Handles mnuFilePrint.Click
+
+    End Sub
+
+    Private Sub mnuFilePrintPreview_Click(sender As Object, e As EventArgs) Handles mnuFilePrintPreview.Click
+        tsslStatus.Text = "Slicing..."
+        mnuFilePrint.Enabled = False
+        mnuFilePrintPreview.Enabled = False
+        tspbProgress.Visible = True
+
+        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value) / 1000, Color.Red, Color.Blue, Color.LightGray))
+    End Sub
+
+    Private Sub mnuFileExit_Click(sender As Object, e As EventArgs) Handles mnuFileExit.Click
+        Close()
+    End Sub
+
+    Private Sub lbObjects_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lbObjects.SelectedIndexChanged
+        Call SetSelectedObject(lbObjects.SelectedItem)
+    End Sub
+
+    Private Sub nudThickness_ValueChanged(sender As Object, e As EventArgs) Handles nudThickness.ValueChanged
+        Call UpdateTrackBar()
+        Call UpdateDisplay()
+    End Sub
+
+    Private Sub nudHeight_ValueChanged(sender As Object, e As EventArgs)
+        Call UpdateTrackBar()
         Call UpdateDisplay()
     End Sub
 
     Private Sub tbSlice_Scroll(sender As Object, e As EventArgs) Handles tbSlice.Scroll
-        ' Slice slider was scrolled, we need to update the display
         Call UpdateDisplay()
     End Sub
 
-    ' Performs a slice on the loaded geometry, and sends the lines to the line drawing control
-    Private Sub UpdateDisplay()
-        Dim sngYSlice As Single
-        Dim lstSliceLines As List(Of LineSegment)
+    Private Sub m_bwSlicer_DoWork(sender As Object, e As DoWorkEventArgs) Handles m_bwSlicer.DoWork
+        Dim saArgs As SliceArgs = DirectCast(e.Argument, SliceArgs)
+        Dim lstOutput As New List(Of Layer)
+        Dim sngYStart As Single
+        Dim vStartPlanePoint As Vector3
+        Dim vEndPlanePoint As Vector3
+        Dim vPlaneNormal As Vector3
+        Dim intSliceIndex As Integer
+        Dim intNumSlices As Integer
 
-        ' Get the Y position of the cutting plane
-        sngYSlice = CSng(tbSlice.Value) / 100
+        sngYStart = saArgs.Section.Bounds.Minimum.Y
+        vPlaneNormal = New Vector3(0, 1, 0)
 
-        ' Cut the model
-        lstSliceLines = Slicer.SliceModel(m_gGeometry, sngYSlice)
+        intSliceIndex = 0
+        intNumSlices = Math.Ceiling(saArgs.Section.Bounds.Height / saArgs.SliceSize)
 
-        ' Send the lines to the line drawing control
-        ldDrawer.SetDrawData(lstSliceLines.ToArray())
+        While sngYStart < saArgs.Section.Bounds.Maximum.Y
+            m_bwSlicer.ReportProgress(0, New SliceProgress(intSliceIndex, intNumSlices))
+
+            vStartPlanePoint = New Vector3(0, sngYStart, 0)
+            vEndPlanePoint = New Vector3(0, sngYStart + saArgs.SliceSize, 0)
+
+            lstOutput.Add(Slicer.Slice(m_gtgSelectedObject, vStartPlanePoint, vEndPlanePoint, vPlaneNormal, saArgs.TopColor, saArgs.BottomColor, saArgs.ContentColor))
+
+            sngYStart += saArgs.SliceSize
+            intSliceIndex += 1
+        End While
+
+        m_lstLayers = lstOutput
     End Sub
+
+    Private Sub m_bwSlicer_ProgressChanged(sender As Object, e As ProgressChangedEventArgs) Handles m_bwSlicer.ProgressChanged
+        Dim spProgress As SliceProgress = DirectCast(e.UserState, SliceProgress)
+
+        tspbProgress.Maximum = spProgress.NumSlices
+        tspbProgress.Value = spProgress.SliceIndex
+    End Sub
+
+    Private Sub m_bwSlicer_RunWorkerCompleted(sender As Object, e As RunWorkerCompletedEventArgs) Handles m_bwSlicer.RunWorkerCompleted
+        tsslStatus.Text = String.Empty
+        tspbProgress.Value = 0
+        tspbProgress.Visible = False
+        mnuFilePrint.Enabled = True
+        mnuFilePrintPreview.Enabled = True
+
+        If e.Error Is Nothing Then
+            Using ppdPreview As New PrintPreviewDialog
+                Using llpdPrint As New LayerListPrintDocument(m_lstLayers)
+                    ppdPreview.Document = llpdPrint
+
+                    ppdPreview.ShowDialog(Me)
+                End Using
+            End Using
+        End If
+    End Sub
+
+    Private Sub OpenModelFile(strFile As String)
+        Dim decTotalHeight As Decimal
+        Dim decTotalWidth As Decimal
+        Dim decTotalDepth As Decimal
+        Dim decTotalArea As Decimal
+
+        m_gGeometry = Geometry.LoadWavefrontObj(strFile)
+
+        decTotalHeight = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height).Sum() * 1000
+        decTotalWidth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Width).Sum() * 1000
+        decTotalDepth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Depth).Sum() * 1000
+        decTotalArea = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height * gtgPart.Bounds.Width * gtgPart.Bounds.Depth).Sum()
+
+        lblTotalHeight.Text = decTotalHeight.ToString("#,##0") & " mm"
+        lblTotalWidth.Text = decTotalWidth.ToString("#,##0") & " mm"
+        lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
+        lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M²"
+
+        lbObjects.DataSource = m_gGeometry.Groups
+    End Sub
+
+    Private Sub SetSelectedObject(gtgObject As GeometryTriangleGroup)
+        Dim mModelMatrix As Matrix
+
+        m_gtgSelectedObject = gtgObject
+
+        If m_gtgSelectedObject IsNot Nothing Then
+            mModelMatrix = Matrix.FromBoundingBox(m_gtgSelectedObject.Bounds)
+
+            mdFront.ModelMatrix = mModelMatrix
+            mdRight.ModelMatrix = mModelMatrix
+            mdBottom.ModelMatrix = mModelMatrix
+            mdIso.ModelMatrix = mModelMatrix * Matrix.Scale(1 / 1.212)
+
+            lblHeight.Text = (m_gtgSelectedObject.Bounds.Height * 1000).ToString("#,##0") & " mm"
+            lblWidth.Text = (m_gtgSelectedObject.Bounds.Width * 1000).ToString("#,##0") & " mm"
+            lblDepth.Text = (m_gtgSelectedObject.Bounds.Depth * 1000).ToString("#,##0") & " mm"
+            lblVolume.Text = (m_gtgSelectedObject.Bounds.Height * m_gtgSelectedObject.Bounds.Width * m_gtgSelectedObject.Bounds.Depth).ToString("#,##0.000") & " M²"
+        Else
+            lblHeight.Text = String.Empty
+            lblWidth.Text = String.Empty
+            lblDepth.Text = String.Empty
+            lblVolume.Text = String.Empty
+        End If
+
+        Call UpdateTrackBar()
+        Call UpdateDisplay()
+    End Sub
+
+    Private Sub UpdateTrackBar()
+        If m_gtgSelectedObject IsNot Nothing Then
+            Dim intNumSlices As Integer = Math.Ceiling(m_gtgSelectedObject.Bounds.Height * 1000 / nudThickness.Value)
+            tbSlice.Maximum = intNumSlices
+            lblSlices.Text = intNumSlices
+        Else
+            tbSlice.Maximum = 0
+            lblSlices.Text = String.Empty
+        End If
+    End Sub
+
+    Private Sub UpdateDisplay()
+        Dim vSliceStart As Vector3
+        Dim vSliceEnd As Vector3
+        Dim vSliceDir As Vector3
+        Dim gtgSlice As GeometryTriangleGroup
+        Dim mMesh As MesherXYZ
+        Dim gtgFullGeom As GeometryTriangleGroup
+        Dim gtgSliceGeom As GeometryTriangleGroup
+        Dim glgSliceLines As GeometryLineGroup
+        Dim glgEndLines As GeometryLineGroup
+        Dim glgStartLines As GeometryLineGroup
+        Dim glgOpeningLines As GeometryLineGroup
+        Dim glgSilhouette As GeometryLineGroup
+
+        If m_gtgSelectedObject IsNot Nothing Then
+            vSliceStart = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) / 1000 * (tbSlice.Value + 1), 0)
+            vSliceEnd = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) / 1000 * tbSlice.Value, 0)
+            vSliceDir = New Vector3(0, -1, 0)
+
+            gtgSlice = Slicer.ExtractBetweenPlanes(m_gtgSelectedObject, vSliceStart, vSliceEnd, vSliceDir)
+            mMesh = New MesherXYZ(m_gtgSelectedObject)
+
+            gtgFullGeom = m_gtgSelectedObject.CloneWithColor(Color.LightGray)
+            gtgSliceGeom = gtgSlice.CloneWithColor(Color.DarkGray)
+            glgSliceLines = gtgSlice.ToLineGroup(Color.Black)
+            glgEndLines = Slicer.OutlineModelPlane(gtgSlice, vSliceEnd, vSliceDir, Color.Blue)
+            glgStartLines = Slicer.OutlineModelPlane(gtgSlice, vSliceStart, vSliceDir, Color.Red)
+            glgOpeningLines = mMesh.CreateDisconnectedEdgesLineGroup(Color.Orange)
+            glgSilhouette = mMesh.CreateSilhouette(vSliceDir, Color.Green)
+
+            mdFront.SetDrawData(gtgFullGeom, gtgSliceGeom, glgEndLines, glgStartLines, glgOpeningLines)
+            mdRight.SetDrawData(gtgFullGeom, gtgSliceGeom, glgEndLines, glgStartLines, glgOpeningLines)
+            mdBottom.SetDrawData(gtgFullGeom, gtgSliceGeom, glgEndLines, glgStartLines, glgOpeningLines, glgSilhouette)
+            'mdIso.SetDrawData(gtgFullGeom, gtgSliceGeom, glgSliceLines, glgEndLines, glgStartLines, glgOpeningLines)
+            mdIso.SetDrawData(gtgFullGeom, gtgSliceGeom, glgEndLines, glgStartLines, glgOpeningLines, glgSilhouette)
+        Else
+            mdFront.SetDrawData()
+            mdRight.SetDrawData()
+            mdBottom.SetDrawData()
+            mdIso.SetDrawData()
+        End If
+    End Sub
+
+    Private Class SliceArgs
+        Public Section As GeometryTriangleGroup
+        Public SliceSize As Single
+        Public TopColor As Color
+        Public BottomColor As Color
+        Public ContentColor As Color
+
+        Public Sub New(gtgSection As GeometryTriangleGroup, sngSliceSize As Single, cTopColor As Color, cBottomColor As Color, cContentColor As Color)
+            Section = gtgSection
+            SliceSize = sngSliceSize
+            TopColor = cTopColor
+            BottomColor = cBottomColor
+            ContentColor = cContentColor
+        End Sub
+    End Class
+
+    Private Class SliceProgress
+        Public SliceIndex As Integer
+        Public NumSlices As Integer
+
+        Public Sub New(intSliceIndex As Integer, intNumSlices As Integer)
+            SliceIndex = intSliceIndex
+            NumSlices = intNumSlices
+        End Sub
+    End Class
 End Class

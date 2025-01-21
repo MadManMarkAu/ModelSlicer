@@ -48,6 +48,18 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.D3DCompiler, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpDX.D3DCompiler.4.2.0\lib\net45\SharpDX.D3DCompiler.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D11, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpDX.Direct3D11.4.2.0\lib\net45\SharpDX.Direct3D11.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.DXGI, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpDX.DXGI.4.2.0\lib\net45\SharpDX.DXGI.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
@@ -73,9 +85,11 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Controls\LineDrawer.vb">
+    <Compile Include="Controls\Direct3D\ModelDisplay.vb">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\MouseDragEventArgs.vb" />
+    <Compile Include="Controls\Direct3D\Renderer.vb" />
     <Compile Include="frmMain.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -83,12 +97,19 @@
       <DependentUpon>frmMain.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Model Data\BoundingBox.vb" />
+    <Compile Include="Geometry\BoundingBox.vb" />
+    <Compile Include="Geometry\Color4.vb" />
+    <Compile Include="Geometry\Color3.vb" />
+    <Compile Include="Geometry\Matrix.vb" />
+    <Compile Include="Geometry\Quaternion.vb" />
     <Compile Include="Model Data\Geometry.vb" />
+    <Compile Include="Model Data\GeometryGroup.vb" />
+    <Compile Include="Model Data\GeometryLine.vb" />
+    <Compile Include="Model Data\GeometryLineGroup.vb" />
+    <Compile Include="Model Data\GeometryTriangleGroup.vb" />
     <Compile Include="Model Data\GeometryTriangle.vb" />
-    <Compile Include="Model Data\LineSegment.vb" />
-    <Compile Include="Model Data\Vector2.vb" />
-    <Compile Include="Model Data\Vector3.vb" />
+    <Compile Include="Geometry\Vector2.vb" />
+    <Compile Include="Geometry\Vector3.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -105,7 +126,13 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="Slicer.vb" />
+    <Compile Include="Printing\Layer.vb" />
+    <Compile Include="Printing\LayerListPrintDocument.vb">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Processors\MesherXYZ.vb" />
+    <Compile Include="Processors\SpaceTree3.vb" />
+    <Compile Include="Processors\Slicer.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="frmMain.resx">
@@ -119,12 +146,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="teapot.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Lucario.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
       <LastGenOutput>Application.Designer.vb</LastGenOutput>
@@ -135,6 +156,10 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
     <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Controls\Direct3D\shader.fx" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

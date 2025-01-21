@@ -1,13 +1,12 @@
 ﻿Imports System.IO
 
 Public Class Geometry
-    ' Backing variable for Bounds property
     Private m_bbBounds As BoundingBox
 
     ''' <summary>
-    ''' Describes the triangles used to construct this geometry data
+    ''' Describes the objects contained in the geometry data
     ''' </summary>
-    Public ReadOnly Property Triangles As New List(Of GeometryTriangle)
+    Public ReadOnly Property Groups As New List(Of GeometryTriangleGroup)
 
     ''' <summary>
     ''' Returns the axis-aligned bounding box of this geometry data
@@ -22,44 +21,103 @@ Public Class Geometry
     ''' Recalculates the axis-aligned bounding box of this geometry data
     ''' </summary>
     Public Sub UpdateBounds()
-        Dim vMin As Vector3
-        Dim vMax As Vector3
         Dim blnBoundsInit As Boolean
 
-        ' Iterate through each triangle in this geometry object
-        For Each tTriangle As GeometryTriangle In Triangles
+        For Each gtgGroup As GeometryTriangleGroup In Groups
+            gtgGroup.UpdateBounds()
+
             If Not blnBoundsInit Then
-                ' This is the first time through the loop, so we take the bounds of the first triangle as-is
-                vMin = tTriangle.GetMin()
-                vMax = tTriangle.GetMax()
+                m_bbBounds = gtgGroup.Bounds
                 blnBoundsInit = True
             Else
-                ' Subsequent iterations through the loop update the min/max values, according to the bounds of the current triangle
-                vMin = Min(vMin, tTriangle.GetMin())
-                vMax = Max(vMax, tTriangle.GetMax())
+                m_bbBounds = UpdateBounds(m_bbBounds, gtgGroup.Bounds)
             End If
-        Next
 
-        ' Construct the BoundingBox structure
-        m_bbBounds = New BoundingBox(vMin, vMax)
+            For Each gtTriangle As GeometryTriangle In gtgGroup.Triangles
+            Next
+        Next
     End Sub
 
-    ' Returns a Vector3 describing the minimum (X,Y,Z) components of the two passed Vector3 structures
-    Private Function Min(vVec1 As Vector3, vVec2 As Vector3) As Vector3
-        Return New Vector3(
-            Math.Min(vVec1.X, vVec2.X),
-            Math.Min(vVec1.Y, vVec2.Y),
-            Math.Min(vVec1.Z, vVec2.Z)
+    Private Function UpdateBounds(bbBounds1 As BoundingBox, bbBounds2 As BoundingBox) As BoundingBox
+        Return New BoundingBox(
+            New Vector3(
+                Math.Min(bbBounds1.Minimum.X, bbBounds2.Minimum.X),
+                Math.Min(bbBounds1.Minimum.Y, bbBounds2.Minimum.Y),
+                Math.Min(bbBounds1.Minimum.Z, bbBounds2.Minimum.Z)
+            ),
+            New Vector3(
+                Math.Max(bbBounds1.Maximum.X, bbBounds2.Maximum.X),
+                Math.Max(bbBounds1.Maximum.Y, bbBounds2.Maximum.Y),
+                Math.Max(bbBounds1.Maximum.Z, bbBounds2.Maximum.Z)
+            )
         )
     End Function
 
-    ' Returns a Vector3 describing the maximum (X,Y,Z) components of the two passed Vector3 structures
-    Private Function Max(vVec1 As Vector3, vVec2 As Vector3) As Vector3
-        Return New Vector3(
-            Math.Max(vVec1.X, vVec2.X),
-            Math.Max(vVec1.Y, vVec2.Y),
-            Math.Max(vVec1.Z, vVec2.Z)
-        )
+    Public Function ToTriangleGroup() As GeometryTriangleGroup
+        Dim gtgOutput As New GeometryTriangleGroup
+        Dim gtgGroup As GeometryTriangleGroup
+        Dim gtTriangle As GeometryTriangle
+
+        For Each gtgGroup In Groups
+            For Each gtTriangle In gtgGroup.Triangles
+                gtgOutput.Triangles.Add(gtTriangle)
+            Next
+        Next
+
+        gtgOutput.UpdateBounds()
+
+        Return gtgOutput
+    End Function
+
+    Public Function ToTriangleGroup(cColor As Color) As GeometryTriangleGroup
+        Dim gtgOutput As New GeometryTriangleGroup
+        Dim gtgGroup As GeometryTriangleGroup
+        Dim gtTriangle As GeometryTriangle
+
+        For Each gtgGroup In Groups
+            For Each gtTriangle In gtgGroup.Triangles
+                gtgOutput.Triangles.Add(New GeometryTriangle(cColor, gtTriangle.V1, gtTriangle.V2, gtTriangle.V3, gtTriangle.V1Normal, gtTriangle.V2Normal, gtTriangle.V3Normal, gtTriangle.SurfaceNormal))
+            Next
+        Next
+
+        gtgOutput.UpdateBounds()
+
+        Return gtgOutput
+    End Function
+
+    Public Function ToLineGroup(cColor As Color) As GeometryLineGroup
+        Dim glgOutput As New GeometryLineGroup
+        Dim gtgGroup As GeometryTriangleGroup
+        Dim gtTriangle As GeometryTriangle
+        Dim lstRemove As New List(Of GeometryLine)
+
+        For Each gtgGroup In Groups
+            For Each gtTriangle In gtgGroup.Triangles
+                glgOutput.Lines.Add(New GeometryLine(cColor, gtTriangle.V1, gtTriangle.V2, gtTriangle.V1Normal, gtTriangle.V2Normal, gtTriangle.SurfaceNormal))
+                glgOutput.Lines.Add(New GeometryLine(cColor, gtTriangle.V2, gtTriangle.V3, gtTriangle.V2Normal, gtTriangle.V3Normal, gtTriangle.SurfaceNormal))
+                glgOutput.Lines.Add(New GeometryLine(cColor, gtTriangle.V3, gtTriangle.V1, gtTriangle.V3Normal, gtTriangle.V1Normal, gtTriangle.SurfaceNormal))
+            Next
+        Next
+
+        glgOutput.UpdateBounds()
+
+        Return glgOutput
+    End Function
+
+    Public Function ToNormalLineGroup(cColor As Color, sngLength As Single) As GeometryLineGroup
+        Dim glgOutput As New GeometryLineGroup
+        Dim gtgGroup As GeometryTriangleGroup
+        Dim gtTriangle As GeometryTriangle
+        Dim vCenter As Vector3
+
+        For Each gtgGroup In Groups
+            For Each gtTriangle In gtgGroup.Triangles
+                vCenter = (gtTriangle.V1 + gtTriangle.V2 + gtTriangle.V3) / 3
+                glgOutput.Lines.Add(New GeometryLine(cColor, vCenter, vCenter + gtTriangle.SurfaceNormal * sngLength))
+            Next
+        Next
+
+        Return glgOutput
     End Function
 
     ''' <summary>
@@ -70,62 +128,64 @@ Public Class Geometry
     Public Shared Function LoadWavefrontObj(strFileName As String) As Geometry
         Dim gOutput As New Geometry
 
-        ' Variables to store the text line as it is processed
         Dim strLine As String
         Dim astrParts() As String
         Dim sngPart1 As Single
         Dim sngPart2 As Single
         Dim sngPart3 As Single
 
-        ' List of indexes vertices in the model file
         Dim lstVerts As New List(Of Vector3)
+        Dim lstNorms As New List(Of Vector3)
+        Dim gtgCurrTriGroup As New GeometryTriangleGroup
 
-        ' Temporary storage used when reading face data from the file
-        Dim vV1 As Vector3
-        Dim vV2 As Vector3
-        Dim vV3 As Vector3
+        Dim vV1 As (Vertex As Vector3, Normal As Vector3)
+        Dim vV2 As (Vertex As Vector3, Normal As Vector3)
+        Dim vV3 As (Vertex As Vector3, Normal As Vector3)
 
-        ' Open the file for reading
+        gOutput.Groups.Add(gtgCurrTriGroup)
+
         Using fsStream As New FileStream(strFileName, FileMode.Open, FileAccess.Read, FileShare.Read)
             Using srReader As New StreamReader(fsStream)
-                ' Continue until no more data
                 While Not srReader.EndOfStream
-                    ' Read the next line, and split it out into fields
                     strLine = srReader.ReadLine()
-                    ' Ignore comment lines
                     If strLine.StartsWith("#") Then
                         strLine = String.Empty
                     End If
-                    ' Split out the line into elements
                     astrParts = strLine.Split(" "c)
 
                     Select Case astrParts(0)
-                        Case "v"
-                            ' This line contains vertex data
+                        Case "o", "g"
+                            If gtgCurrTriGroup.Triangles.Count > 0 Then
+                                gtgCurrTriGroup = New GeometryTriangleGroup
+                                gOutput.Groups.Add(gtgCurrTriGroup)
+                            End If
+                            If astrParts.Length >= 2 Then
+                                gtgCurrTriGroup.Name = strLine.Split(New Char() {" "c}, 2)(1)
+                            End If
 
-                            ' Sanity check, and parse text into floating point values
+                        Case "v"
                             If astrParts.Length >= 4 AndAlso Single.TryParse(astrParts(1), sngPart1) AndAlso Single.TryParse(astrParts(2), sngPart2) AndAlso Single.TryParse(astrParts(3), sngPart3) Then
                                 lstVerts.Add(New Vector3(sngPart1, sngPart2, -sngPart3))
                             Else
                                 Throw New ApplicationException("Vertex data had less than 3 elements, or one of the elements was non-numeric")
                             End If
 
+                        Case "vn"
+                            If astrParts.Length >= 4 AndAlso Single.TryParse(astrParts(1), sngPart1) AndAlso Single.TryParse(astrParts(2), sngPart2) AndAlso Single.TryParse(astrParts(3), sngPart3) Then
+                                lstNorms.Add(New Vector3(sngPart1, sngPart2, -sngPart3))
+                            Else
+                                Throw New Exception()
+                            End If
+
                         Case "f"
-                            ' This line contains face data
+                            vV1 = ParseFacepoint(astrParts(1), lstVerts, lstNorms)
+                            vV3 = ParseFacepoint(astrParts(2), lstVerts, lstNorms)
 
-                            ' Parse the first two face data elements
-                            ' Note we store the second face data in vV3 because we will transfer it to vV2 when we read the next face data element
-                            vV1 = ParseFacepoint(astrParts(1), lstVerts)
-                            vV3 = ParseFacepoint(astrParts(2), lstVerts)
-
-                            ' Process all remaining face data elements
-                            ' We do it this way so the loader can handle triangles, or quads
-                            ' Quads will be split into two triangles
                             For intIndex As Integer = 3 To astrParts.Length - 1
                                 vV2 = vV3
-                                vV3 = ParseFacepoint(astrParts(intIndex), lstVerts)
+                                vV3 = ParseFacepoint(astrParts(intIndex), lstVerts, lstNorms)
 
-                                gOutput.Triangles.Add(New GeometryTriangle(vV3, vV2, vV1))
+                                gtgCurrTriGroup.Triangles.Add(New GeometryTriangle(vV3.Vertex, vV2.Vertex, vV1.Vertex, vV3.Normal, vV2.Normal, vV1.Normal))
                             Next
 
                     End Select
@@ -133,27 +193,36 @@ Public Class Geometry
             End Using
         End Using
 
-        ' Update the geometry bounds
         gOutput.UpdateBounds()
 
         Return gOutput
     End Function
 
-    ' Given a face element, parses the data, discarding everything except the vertex index, and returns the referenced vertex
-    Private Shared Function ParseFacepoint(strData As String, lstVerts As List(Of Vector3)) As Vector3
+    Private Shared Function ParseFacepoint(strData As String, lstVerts As List(Of Vector3), lstNorms As List(Of Vector3)) As (Point As Vector3, Normal As Vector3)
         Dim vOutput As New Vector3
-        Dim astrParts() As String = strData.Split("/"c) ' Split out the face element into constituent parts
+        Dim astrParts() As String = strData.Split("/"c)
         Dim intIndex As Integer
+        Dim vVertex As Vector3
+        Dim vNormal As Vector3
 
-        ' Sanity check
         If astrParts.Length < 1 OrElse astrParts(0).Length = 0 Then
             Throw New ApplicationException("Face data element did not contain a vertex index")
         End If
 
         If Integer.TryParse(astrParts(0), intIndex) Then
-            Return lstVerts(intIndex - 1)
+            vVertex = lstVerts(intIndex - 1)
         Else
             Throw New ApplicationException("Face data element has a non-numeric vertex index")
         End If
+
+        If astrParts.Length >= 2 Then
+            If Integer.TryParse(astrParts(2), intIndex) Then
+                vNormal = lstNorms(intIndex - 1)
+            Else
+                Throw New ApplicationException("Face data element has a non-numeric normal index")
+            End If
+        End If
+
+        Return (vVertex, vNormal)
     End Function
 End Class
