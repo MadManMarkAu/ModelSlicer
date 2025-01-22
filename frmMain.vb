@@ -1,4 +1,6 @@
 ﻿Imports System.ComponentModel
+Imports System.IO
+Imports System.Xml
 
 Public Class frmMain
     Private m_gGeometry As Geometry
@@ -28,6 +30,10 @@ Public Class frmMain
         End Using
     End Sub
 
+    Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
+        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value) / 1000, Color.Red, Color.Blue, Color.LightGray, False))
+    End Sub
+
     Private Sub mnuFilePrint_Click(sender As Object, e As EventArgs) Handles mnuFilePrint.Click
 
     End Sub
@@ -38,7 +44,7 @@ Public Class frmMain
         mnuFilePrintPreview.Enabled = False
         tspbProgress.Visible = True
 
-        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value) / 1000, Color.Red, Color.Blue, Color.LightGray))
+        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value) / 1000, Color.Red, Color.Blue, Color.LightGray, True))
     End Sub
 
     Private Sub mnuFileExit_Click(sender As Object, e As EventArgs) Handles mnuFileExit.Click
@@ -92,6 +98,7 @@ Public Class frmMain
         End While
 
         m_lstLayers = lstOutput
+        e.Result = saArgs.Print
     End Sub
 
     Private Sub m_bwSlicer_ProgressChanged(sender As Object, e As ProgressChangedEventArgs) Handles m_bwSlicer.ProgressChanged
@@ -101,7 +108,24 @@ Public Class frmMain
         tspbProgress.Value = spProgress.SliceIndex
     End Sub
 
+    Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, layerName As String) As XmlElement
+        Dim svgLayer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
+        svgLayer.RemoveAllAttributes()
+        svgLayer.SetAttribute("id", layerName)
+        For Each line As GeometryLine In lines.Lines
+            Dim svgLine As XmlElement = xmlDoc.CreateElement("line", "http://www.w3.org/2000/svg")
+            svgLine.SetAttribute("x1", (line.V1.X*1000).ToString())
+            svgLine.SetAttribute("y1", (line.V1.Z*1000).ToString())
+            svgLine.SetAttribute("x2", (line.V2.X*1000).ToString())
+            svgLine.SetAttribute("y2", (line.V2.Z*1000).ToString())
+            svgLine.SetAttribute("stroke", line.Color.Name)
+            svgLayer.AppendChild(svgLine)
+        Next
+        Return svgLayer
+    End Function
+
     Private Sub m_bwSlicer_RunWorkerCompleted(sender As Object, e As RunWorkerCompletedEventArgs) Handles m_bwSlicer.RunWorkerCompleted
+        Dim printBool As Boolean = DirectCast(e.Result, Boolean)
         tsslStatus.Text = String.Empty
         tspbProgress.Value = 0
         tspbProgress.Visible = False
@@ -109,13 +133,35 @@ Public Class frmMain
         mnuFilePrintPreview.Enabled = True
 
         If e.Error Is Nothing Then
-            Using ppdPreview As New PrintPreviewDialog
-                Using llpdPrint As New LayerListPrintDocument(m_lstLayers)
-                    ppdPreview.Document = llpdPrint
+            If printBool Then
+                Using ppdPreview As New PrintPreviewDialog
+                    Using llpdPrint As New LayerListPrintDocument(m_lstLayers)
+                        ppdPreview.Document = llpdPrint
 
-                    ppdPreview.ShowDialog(Me)
+                        ppdPreview.ShowDialog(Me)
+                    End Using
                 End Using
-            End Using
+            Else
+                Using sf As New SaveFileDialog
+                    sf.FileName = "Select the folder to save SVG files"
+                    If sf.ShowDialog() = DialogResult.OK Then
+                        Dim selectedPath As String = Path.GetDirectoryName(sf.FileName)
+                        For Each layer As Layer In m_lstLayers
+                            Dim xmlDoc As New XmlDocument()
+                            Dim svgRoot As XmlElement = xmlDoc.CreateElement("svg", "http://www.w3.org/2000/svg")
+                            xmlDoc.AppendChild(svgRoot)
+
+                            Dim svgLayerTop As XmlElement = ConvertLayerToSvg(xmlDoc, layer.TopOutline, "top")
+                            svgRoot.AppendChild(svgLayerTop)
+
+                            Dim svgLayerBottom As XmlElement = ConvertLayerToSvg(xmlDoc, layer.BottomOutline, "bottom")
+                            svgRoot.AppendChild(svgLayerBottom)
+
+                            xmlDoc.Save(Path.Combine(selectedPath, "layer" & m_lstLayers.IndexOf(layer) & ".svg"))
+                        Next
+                    End If
+                End Using
+            End If
         End If
     End Sub
 
@@ -136,6 +182,10 @@ Public Class frmMain
         lblTotalWidth.Text = decTotalWidth.ToString("#,##0") & " mm"
         lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
         lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M²"
+
+        mnuFileExport.Enabled = True
+        mnuFilePrint.Enabled = True
+        mnuFilePrintPreview.Enabled = True
 
         lbObjects.DataSource = m_gGeometry.Groups
     End Sub
@@ -228,13 +278,15 @@ Public Class frmMain
         Public TopColor As Color
         Public BottomColor As Color
         Public ContentColor As Color
+        Public Print As Boolean
 
-        Public Sub New(gtgSection As GeometryTriangleGroup, sngSliceSize As Single, cTopColor As Color, cBottomColor As Color, cContentColor As Color)
+        Public Sub New(gtgSection As GeometryTriangleGroup, sngSliceSize As Single, cTopColor As Color, cBottomColor As Color, cContentColor As Color, cPrint As Boolean)
             Section = gtgSection
             SliceSize = sngSliceSize
             TopColor = cTopColor
             BottomColor = cBottomColor
             ContentColor = cContentColor
+            Print = cPrint
         End Sub
     End Class
 
