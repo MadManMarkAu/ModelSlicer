@@ -145,12 +145,13 @@ Public Class frmMain
         Dim svgLayer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
         svgLayer.RemoveAllAttributes()
         svgLayer.SetAttribute("id", layerName)
+        Dim xMin As Single = Math.Abs(lines.Bounds.Minimum.X)
         For Each line As GeometryLine In lines.Lines
             Dim svgLine As XmlElement = xmlDoc.CreateElement("line", "http://www.w3.org/2000/svg")
-            svgLine.SetAttribute("x1", (line.V1.X*1000).ToString())
-            svgLine.SetAttribute("y1", (line.V1.Z*1000).ToString())
-            svgLine.SetAttribute("x2", (line.V2.X*1000).ToString())
-            svgLine.SetAttribute("y2", (line.V2.Z*1000).ToString())
+            svgLine.SetAttribute("x1", Math.Abs(line.V1.X - xMin).ToString())
+            svgLine.SetAttribute("y1", Math.Abs(line.V1.Z).ToString())
+            svgLine.SetAttribute("x2", Math.Abs(line.V2.X - xMin).ToString())
+            svgLine.SetAttribute("y2", Math.Abs(line.V2.Z).ToString())
             svgLine.SetAttribute("stroke", line.Color.Name)
             svgLayer.AppendChild(svgLine)
         Next
