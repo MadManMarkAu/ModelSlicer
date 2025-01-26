@@ -134,17 +134,16 @@ Public Class frmMain
         tspbProgress.Value = spProgress.SliceIndex
     End Sub
 
-    Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, layerName As String) As XmlElement
+    Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, xMin As Single, zMin As Single, layerName As String) As XmlElement
         Dim svgLayer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
         svgLayer.RemoveAllAttributes()
         svgLayer.SetAttribute("id", layerName)
-        Dim xMin As Single = Math.Abs(lines.Bounds.Minimum.X)
         For Each line As GeometryLine In lines.Lines
             Dim svgLine As XmlElement = xmlDoc.CreateElement("line", "http://www.w3.org/2000/svg")
-            svgLine.SetAttribute("x1", Math.Abs(line.V1.X - xMin).ToString())
-            svgLine.SetAttribute("y1", Math.Abs(line.V1.Z).ToString())
-            svgLine.SetAttribute("x2", Math.Abs(line.V2.X - xMin).ToString())
-            svgLine.SetAttribute("y2", Math.Abs(line.V2.Z).ToString())
+            svgLine.SetAttribute("x1", (line.V1.X - xMin).ToString())
+            svgLine.SetAttribute("y1", (line.V1.Z - zMin).ToString())
+            svgLine.SetAttribute("x2", (line.V2.X - xMin).ToString())
+            svgLine.SetAttribute("y2", (line.V2.Z - zMin).ToString())
             svgLine.SetAttribute("stroke", line.Color.Name)
             svgLayer.AppendChild(svgLine)
         Next
@@ -178,10 +177,13 @@ Public Class frmMain
                             Dim svgRoot As XmlElement = xmlDoc.CreateElement("svg", "http://www.w3.org/2000/svg")
                             xmlDoc.AppendChild(svgRoot)
 
-                            Dim svgLayerTop As XmlElement = ConvertLayerToSvg(xmlDoc, layer.TopOutline, "top")
+                            Dim xMin As Single = layer.Bounds.Minimum.X
+                            Dim zMin As Single = layer.Bounds.Minimum.Z
+
+                            Dim svgLayerTop As XmlElement = ConvertLayerToSvg(xmlDoc, layer.TopOutline, xMin, zMin, "top")
                             svgRoot.AppendChild(svgLayerTop)
 
-                            Dim svgLayerBottom As XmlElement = ConvertLayerToSvg(xmlDoc, layer.BottomOutline, "bottom")
+                            Dim svgLayerBottom As XmlElement = ConvertLayerToSvg(xmlDoc, layer.BottomOutline, xMin, zMin, "bottom")
                             svgRoot.AppendChild(svgLayerBottom)
 
                             xmlDoc.Save(Path.Combine(selectedPath, "layer" & m_lstLayers.IndexOf(layer) & ".svg"))
