@@ -1,6 +1,37 @@
 ﻿Imports System.IO
 
 Public Class Geometry
+    Enum Unit
+        [MM]
+        [CM]
+        [M]
+        [IN]
+        [FT]
+    End Enum
+
+    Public Shared Function StringToUnit(name As String) As Unit
+        Select Case name.ToLower()
+            Case "millimeters"
+                return Unit.MM
+            Case "centimeters"
+                return Unit.CM
+            Case "meters"
+                return Unit.M
+            Case "inches"
+                return Unit.IN
+            Case "feet"
+                return Unit.FT
+            Case Else
+                return Unit.MM
+        End Select
+    End Function
+
+    Enum Axis
+        [X]
+        [Y]
+        [Z]
+    End Enum
+
     Private m_bbBounds As BoundingBox
     Private m_scale As Decimal
     Private m_zUp As Boolean
@@ -11,7 +42,7 @@ Public Class Geometry
 
     ''' <summary>
     ''' Creates a new instance of the <see cref="Geometry"/> class.
-    ''' </
+    ''' </>
 
     ''' <summary>
     ''' Describes the objects contained in the geometry data
