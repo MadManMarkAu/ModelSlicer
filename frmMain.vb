@@ -33,7 +33,12 @@ Public Class frmMain
     End Sub
 
     Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
-        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value) / 1000, Color.Red, Color.Blue, Color.LightGray, False))
+        tsslStatus.Text = "Slicing..."
+        mnuFilePrint.Enabled = False
+        mnuFilePrintPreview.Enabled = False
+        tspbProgress.Visible = True
+
+        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray, False))
     End Sub
 
     Private Sub mnuFilePrint_Click(sender As Object, e As EventArgs) Handles mnuFilePrint.Click
