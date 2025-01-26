@@ -199,20 +199,11 @@ Public Class frmMain
         End If
     End Sub
 
-    Private Sub ReloadModelFile()
-        If tsslFile.Text = "No File Loaded" Or tsslFile.Text = "" Then
-            Exit Sub
-        End If
-        Call OpenModelFile(tsslFile.Text)
-    End Sub
-
-    Private Sub OpenModelFile(strFile As String)
+    Private Sub LoadModelStats()
         Dim decTotalHeight As Decimal
         Dim decTotalWidth As Decimal
         Dim decTotalDepth As Decimal
         Dim decTotalArea As Decimal
-
-        m_gGeometry = Geometry.LoadWavefrontObj(strFile, m_scale, m_zUp)
 
         decTotalHeight = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height).Sum()
         decTotalWidth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Width).Sum()
@@ -223,6 +214,20 @@ Public Class frmMain
         lblTotalWidth.Text = decTotalWidth.ToString("#,##0") & " mm"
         lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
         lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M³"
+    End Sub
+
+    Private Sub ReloadModelFile()
+        If tsslFile.Text = "No File Loaded" Or tsslFile.Text = "" Then
+            Exit Sub
+        End If
+        Call OpenModelFile(tsslFile.Text)
+    End Sub
+
+    Private Sub OpenModelFile(strFile As String)
+
+        m_gGeometry = Geometry.LoadWavefrontObj(strFile, m_scale, m_zUp)
+
+        LoadModelStats()
 
         tsslFile.Text = strFile
 
