@@ -33,12 +33,8 @@ Public Class Geometry
     End Enum
 
     Private m_bbBounds As BoundingBox
-    Private m_scale As Decimal
-    Private m_zUp As Boolean
-
-    public sub change_scale(new_scale As Decimal)
-        m_scale = new_scale
-    End sub
+    Private m_unit As Unit = Unit.MM
+    Private m_upAxis As Axis = Axis.Y
 
     ''' <summary>
     ''' Creates a new instance of the <see cref="Geometry"/> class.
@@ -57,6 +53,31 @@ Public Class Geometry
             Return m_bbBounds
         End Get
     End Property
+
+    public sub ChangeScale(newUnit As Unit)
+        Dim scale As Single =
+            {   'MM,    CM,    M,      IN,    FT
+                {1,     10,    1000,   25.4,  304.8},'MM
+                {0.1,   1,     100,    2.54,  30.48},'CM
+                {0.001, 0.01,  1,      0.025, 0.305},'M
+                {0.039, 0.394, 39.370, 1,     12   },'IN
+                {0.003, 0.033, 3.281,  0.083, 1    } 'FT
+            }(m_unit, newUnit)
+        For ii As Integer = 0 To (Groups.Count - 1)
+            Groups(ii).Scale(scale)
+        Next ii
+        m_unit = newUnit
+    End sub
+
+    Public Sub ChangeUpAxis(newUpAxis As Axis)
+        If m_upAxis = newUpAxis Then
+            Return
+        End If
+        For ii As Integer = 0 To (Groups.Count - 1)
+            Groups(ii).SwapUpAxis()
+        Next ii
+        m_upAxis = newUpAxis
+    End Sub
 
     ''' <summary>
     ''' Recalculates the axis-aligned bounding box of this geometry data
@@ -168,10 +189,8 @@ Public Class Geometry
     ''' <param name="scale">The scale factor to use.</param>
     ''' <param name="zUp">If the model is z up or y up.</param>
     ''' <returns>A <see cref="Geometry"/> object describing the model.</returns>
-    Public Shared Function LoadWavefrontObj(strFileName As String, scale As Decimal, zUp As Boolean) As Geometry
+    Public Shared Function LoadWavefrontObj(strFileName As String, unit As Unit, upAxis As Axis) As Geometry
         Dim gOutput As New Geometry
-
-        gOutput.m_scale = scale
 
         Dim strLine As String
         Dim astrParts() As String
@@ -210,22 +229,14 @@ Public Class Geometry
 
                         Case "v"
                             If astrParts.Length >= 4 AndAlso Single.TryParse(astrParts(1), sngPart1) AndAlso Single.TryParse(astrParts(2), sngPart2) AndAlso Single.TryParse(astrParts(3), sngPart3) Then
-                                If zUp Then
-                                    lstVerts.Add(New Vector3(sngPart1*scale, sngPart3*scale, -sngPart2*scale))
-                                Else
-                                    lstVerts.Add(New Vector3(sngPart1*scale, sngPart2*scale, -sngPart3*scale))
-                                End If
+                                lstVerts.Add(New Vector3(sngPart1, sngPart2, -sngPart3))
                             Else
                                 Throw New ApplicationException("Vertex data had less than 3 elements, or one of the elements was non-numeric")
                             End If
 
                         Case "vn"
                             If astrParts.Length >= 4 AndAlso Single.TryParse(astrParts(1), sngPart1) AndAlso Single.TryParse(astrParts(2), sngPart2) AndAlso Single.TryParse(astrParts(3), sngPart3) Then
-                                If zUp Then
-                                    lstNorms.Add(New Vector3(sngPart1*scale, sngPart3*scale, -sngPart2*scale))
-                                Else
-                                    lstNorms.Add(New Vector3(sngPart1*scale, sngPart2*scale, -sngPart3*scale))
-                                End If
+                                lstNorms.Add(New Vector3(sngPart1, sngPart2, -sngPart3))
                             Else
                                 Throw New Exception()
                             End If
@@ -245,7 +256,9 @@ Public Class Geometry
                 End While
             End Using
         End Using
-
+        
+        gOutput.ChangeScale(unit)
+        gOutput.ChangeUpAxis(upAxis)
         gOutput.UpdateBounds()
 
         Return gOutput

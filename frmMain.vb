@@ -7,8 +7,6 @@ Public Class frmMain
     Private m_gtgSelectedObject As GeometryTriangleGroup
     Private WithEvents m_bwSlicer As New BackgroundWorker With {.WorkerReportsProgress = True}
     Private m_lstLayers As List(Of Layer)
-    Private m_scale As Decimal
-    Private m_zUp As Boolean
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         'mdFront.ViewMatrix = Matrix.Identity() ' .RotationY(Math.PI)
@@ -68,29 +66,24 @@ Public Class frmMain
     End Sub
 
     Private Sub zUpRadioButton_CheckedChanged(sender As Object, e As EventArgs) Handles zUpRadioButton.CheckedChanged
-        m_zUp = zUpRadioButton.Checked
+        Dim upAxis As Geometry.Axis = If(zUpRadioButton.Checked, Geometry.Axis.Z, Geometry.Axis.Y)
 
-        Call ReloadModelFile()
-        Call UpdateDisplay()
+        if m_gGeometry IsNot Nothing Then
+            m_gGeometry.ChangeUpAxis(upAxis)
+            LoadModelStats()
+            SetSelectedObject(lbObjects.SelectedItem)
+        end if
     End Sub
 
     Private Sub unitsComboBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles unitsComboBox.SelectedIndexChanged
         Dim units As String = unitsComboBox.SelectedItem.ToString()
-        Select Case units
-            Case "Millimeters"
-                m_scale = 1
-            Case "Centimeters"
-                m_scale = 10
-            Case "Meters"
-                m_scale = 1000
-            Case "Inches"
-                m_scale = 25.4
-            Case "Feet"
-                m_scale = 304.8
-        End Select
+        Dim newUnit As Geometry.Unit = Geometry.StringToUnit(units)
 
-        Call ReloadModelFile()
-        Call UpdateDisplay()
+        if m_gGeometry IsNot Nothing Then
+            m_gGeometry.ChangeScale(newUnit)
+            LoadModelStats()
+            SetSelectedObject(lbObjects.SelectedItem)
+        end if
     End Sub
 
     Private Sub nudHeight_ValueChanged(sender As Object, e As EventArgs)
@@ -224,8 +217,11 @@ Public Class frmMain
     End Sub
 
     Private Sub OpenModelFile(strFile As String)
+        Dim units As String = unitsComboBox.SelectedItem.ToString()
+        Dim loadUnit As Geometry.Unit = Geometry.StringToUnit(units)
+        Dim upAxis As Geometry.Axis = If(zUpRadioButton.Checked, Geometry.Axis.Z, Geometry.Axis.Y)
 
-        m_gGeometry = Geometry.LoadWavefrontObj(strFile, m_scale, m_zUp)
+        m_gGeometry = Geometry.LoadWavefrontObj(strFile, loadUnit, upAxis)
 
         LoadModelStats()
 
