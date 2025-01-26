@@ -7,6 +7,7 @@ Public Class frmMain
     Private m_gtgSelectedObject As GeometryTriangleGroup
     Private WithEvents m_bwSlicer As New BackgroundWorker With {.WorkerReportsProgress = True}
     Private m_lstLayers As List(Of Layer)
+    Private m_fileName As String
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         'mdFront.ViewMatrix = Matrix.Identity() ' .RotationY(Math.PI)
@@ -170,10 +171,9 @@ Public Class frmMain
     End Sub
 
     Private Sub ReloadModelFile()
-        If tsslFile.Text = "No File Loaded" Or tsslFile.Text = "" Then
-            Exit Sub
+        If m_fileName IsNot Nothing Then
+            OpenModelFile(m_fileName)
         End If
-        OpenModelFile(tsslFile.Text)
     End Sub
 
     Private Sub OpenModelFile(strFile As String)
@@ -195,6 +195,7 @@ Public Class frmMain
         lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M²"
 
         tsslFile.Text = strFile
+        m_fileName = strFile
 
         mnuFileReload.Enabled = True
         mnuFileExport.Enabled = True
