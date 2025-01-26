@@ -25,9 +25,13 @@ Public Class frmMain
             ofdOpen.Title = "Open Model File"
             ofdOpen.Filter = "Wavefront OBJ Files|*.obj|All Files (*.*)|*.*"
             If ofdOpen.ShowDialog(Me) = DialogResult.OK Then
-                Call OpenModelFile(ofdOpen.FileName)
+                OpenModelFile(ofdOpen.FileName)
             End If
         End Using
+    End Sub
+
+    Private Sub mnuFileReload_Click(sender As Object, e As EventArgs) Handles mnuFileReload.Click
+        ReloadModelFile()
     End Sub
 
     Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
@@ -165,6 +169,13 @@ Public Class frmMain
         End If
     End Sub
 
+    Private Sub ReloadModelFile()
+        If tsslFile.Text = "No File Loaded" Or tsslFile.Text = "" Then
+            Exit Sub
+        End If
+        OpenModelFile(tsslFile.Text)
+    End Sub
+
     Private Sub OpenModelFile(strFile As String)
         Dim decTotalHeight As Decimal
         Dim decTotalWidth As Decimal
@@ -183,6 +194,9 @@ Public Class frmMain
         lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
         lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M²"
 
+        tsslFile.Text = strFile
+
+        mnuFileReload.Enabled = True
         mnuFileExport.Enabled = True
         mnuFilePrint.Enabled = True
         mnuFilePrintPreview.Enabled = True
