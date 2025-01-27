@@ -7,6 +7,7 @@ Public Class frmMain
     Private m_gtgSelectedObject As GeometryTriangleGroup
     Private WithEvents m_bwSlicer As New BackgroundWorker With {.WorkerReportsProgress = True}
     Private m_lstLayers As List(Of Layer)
+    Private m_fileName As String
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         'mdFront.ViewMatrix = Matrix.Identity() ' .RotationY(Math.PI)
@@ -28,6 +29,10 @@ Public Class frmMain
                 OpenModelFile(ofdOpen.FileName)
             End If
         End Using
+    End Sub
+
+    Private Sub mnuFileReload_Click(sender As Object, e As EventArgs) Handles mnuFileReload.Click
+        ReloadModelFile()
     End Sub
 
     Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
@@ -212,10 +217,9 @@ Public Class frmMain
     End Sub
 
     Private Sub ReloadModelFile()
-        If tsslFile.Text = "No File Loaded" Or tsslFile.Text = "" Then
-            Exit Sub
+        If m_fileName IsNot Nothing Then
+            OpenModelFile(m_fileName)
         End If
-        Call OpenModelFile(tsslFile.Text)
     End Sub
 
     Private Sub OpenModelFile(strFile As String)
@@ -229,6 +233,10 @@ Public Class frmMain
 
         tsslFile.Text = strFile
 
+        tsslFile.Text = strFile
+        m_fileName = strFile
+
+        mnuFileReload.Enabled = True
         mnuFileExport.Enabled = True
         mnuFilePrint.Enabled = True
         mnuFilePrintPreview.Enabled = True

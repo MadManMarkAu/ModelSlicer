@@ -41,6 +41,7 @@ Partial Class frmMain
         Me.MenuStrip1 = New System.Windows.Forms.MenuStrip()
         Me.mnuFile = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFileOpen = New System.Windows.Forms.ToolStripMenuItem()
+        Me.mnuFileReload = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripMenuItem2 = New System.Windows.Forms.ToolStripSeparator()
         Me.mnuFileExport = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFilePrint = New System.Windows.Forms.ToolStripMenuItem()
@@ -264,7 +265,7 @@ Partial Class frmMain
         '
         'mnuFile
         '
-        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.ToolStripMenuItem2, Me.mnuFileExport, Me.mnuFilePrint, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
+        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.mnuFileReload, Me.ToolStripMenuItem2, Me.mnuFileExport, Me.mnuFilePrint, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
         Me.mnuFile.Name = "mnuFile"
         Me.mnuFile.Size = New System.Drawing.Size(37, 20)
         Me.mnuFile.Text = "&File"
@@ -274,6 +275,13 @@ Partial Class frmMain
         Me.mnuFileOpen.Name = "mnuFileOpen"
         Me.mnuFileOpen.Size = New System.Drawing.Size(152, 22)
         Me.mnuFileOpen.Text = "&Open..."
+        '
+        'mnuFileReload
+        '
+        Me.mnuFileReload.Name = "mnuFileReload"
+        Me.mnuFileReload.Size = New System.Drawing.Size(152, 22)
+        Me.mnuFileReload.Text = "&Reload..."
+        Me.mnuFileReload.Enabled = False
         '
         'ToolStripMenuItem2
         '
@@ -632,6 +640,7 @@ Partial Class frmMain
     Friend WithEvents MenuStrip1 As MenuStrip
     Friend WithEvents mnuFile As ToolStripMenuItem
     Friend WithEvents mnuFileOpen As ToolStripMenuItem
+    Friend WithEvents mnuFileReload As ToolStripMenuItem
     Friend WithEvents ToolStripMenuItem2 As ToolStripSeparator
     Friend WithEvents mnuFileExport As ToolStripMenuItem
     Friend WithEvents mnuFilePrint As ToolStripMenuItem
