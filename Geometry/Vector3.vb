@@ -56,6 +56,10 @@ Public Structure Vector3
         Return "X=" & X & ", Y=" & Y & ", Z=" & Z
     End Function
 
+    Public Function SwapUpAxis()
+        Return New Vector3(X, -Z, -Y)
+    End Function
+
     Public Shared Function Normalize(vVec As Vector3) As Vector3
         Dim sngLength As Single = vVec.Length()
 

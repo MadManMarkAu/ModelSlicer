@@ -36,7 +36,12 @@ Public Class frmMain
     End Sub
 
     Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
-        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value) / 1000, Color.Red, Color.Blue, Color.LightGray, False))
+        tsslStatus.Text = "Slicing..."
+        mnuFilePrint.Enabled = False
+        mnuFilePrintPreview.Enabled = False
+        tspbProgress.Visible = True
+
+        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray, False))
     End Sub
 
     Private Sub mnuFilePrint_Click(sender As Object, e As EventArgs) Handles mnuFilePrint.Click
@@ -49,7 +54,7 @@ Public Class frmMain
         mnuFilePrintPreview.Enabled = False
         tspbProgress.Visible = True
 
-        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value) / 1000, Color.Red, Color.Blue, Color.LightGray, True))
+        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray, True))
     End Sub
 
     Private Sub mnuFileExit_Click(sender As Object, e As EventArgs) Handles mnuFileExit.Click
@@ -63,6 +68,27 @@ Public Class frmMain
     Private Sub nudThickness_ValueChanged(sender As Object, e As EventArgs) Handles nudThickness.ValueChanged
         Call UpdateTrackBar()
         Call UpdateDisplay()
+    End Sub
+
+    Private Sub zUpRadioButton_CheckedChanged(sender As Object, e As EventArgs) Handles zUpRadioButton.CheckedChanged
+        Dim upAxis As Geometry.Axis = If(zUpRadioButton.Checked, Geometry.Axis.Z, Geometry.Axis.Y)
+
+        if m_gGeometry IsNot Nothing Then
+            m_gGeometry.ChangeUpAxis(upAxis)
+            LoadModelStats()
+            SetSelectedObject(lbObjects.SelectedItem)
+        end if
+    End Sub
+
+    Private Sub unitsComboBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles unitsComboBox.SelectedIndexChanged
+        Dim units As String = unitsComboBox.SelectedItem.ToString()
+        Dim newUnit As Geometry.Unit = Geometry.StringToUnit(units)
+
+        if m_gGeometry IsNot Nothing Then
+            m_gGeometry.ChangeScale(newUnit)
+            LoadModelStats()
+            SetSelectedObject(lbObjects.SelectedItem)
+        end if
     End Sub
 
     Private Sub nudHeight_ValueChanged(sender As Object, e As EventArgs)
@@ -113,16 +139,16 @@ Public Class frmMain
         tspbProgress.Value = spProgress.SliceIndex
     End Sub
 
-    Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, layerName As String) As XmlElement
+    Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, xMin As Single, zMin As Single, layerName As String) As XmlElement
         Dim svgLayer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
         svgLayer.RemoveAllAttributes()
         svgLayer.SetAttribute("id", layerName)
         For Each line As GeometryLine In lines.Lines
             Dim svgLine As XmlElement = xmlDoc.CreateElement("line", "http://www.w3.org/2000/svg")
-            svgLine.SetAttribute("x1", (line.V1.X*1000).ToString())
-            svgLine.SetAttribute("y1", (line.V1.Z*1000).ToString())
-            svgLine.SetAttribute("x2", (line.V2.X*1000).ToString())
-            svgLine.SetAttribute("y2", (line.V2.Z*1000).ToString())
+            svgLine.SetAttribute("x1", (line.V1.X - xMin).ToString())
+            svgLine.SetAttribute("y1", (line.V1.Z - zMin).ToString())
+            svgLine.SetAttribute("x2", (line.V2.X - xMin).ToString())
+            svgLine.SetAttribute("y2", (line.V2.Z - zMin).ToString())
             svgLine.SetAttribute("stroke", line.Color.Name)
             svgLayer.AppendChild(svgLine)
         Next
@@ -156,10 +182,13 @@ Public Class frmMain
                             Dim svgRoot As XmlElement = xmlDoc.CreateElement("svg", "http://www.w3.org/2000/svg")
                             xmlDoc.AppendChild(svgRoot)
 
-                            Dim svgLayerTop As XmlElement = ConvertLayerToSvg(xmlDoc, layer.TopOutline, "top")
+                            Dim xMin As Single = layer.Bounds.Minimum.X
+                            Dim zMin As Single = layer.Bounds.Minimum.Z
+
+                            Dim svgLayerTop As XmlElement = ConvertLayerToSvg(xmlDoc, layer.TopOutline, xMin, zMin, "top")
                             svgRoot.AppendChild(svgLayerTop)
 
-                            Dim svgLayerBottom As XmlElement = ConvertLayerToSvg(xmlDoc, layer.BottomOutline, "bottom")
+                            Dim svgLayerBottom As XmlElement = ConvertLayerToSvg(xmlDoc, layer.BottomOutline, xMin, zMin, "bottom")
                             svgRoot.AppendChild(svgLayerBottom)
 
                             xmlDoc.Save(Path.Combine(selectedPath, "layer" & m_lstLayers.IndexOf(layer) & ".svg"))
@@ -170,6 +199,23 @@ Public Class frmMain
         End If
     End Sub
 
+    Private Sub LoadModelStats()
+        Dim decTotalHeight As Decimal
+        Dim decTotalWidth As Decimal
+        Dim decTotalDepth As Decimal
+        Dim decTotalArea As Decimal
+
+        decTotalHeight = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height).Sum()
+        decTotalWidth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Width).Sum()
+        decTotalDepth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Depth).Sum()
+        decTotalArea = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height * gtgPart.Bounds.Width * gtgPart.Bounds.Depth).Sum() / 1000000000
+
+        lblTotalHeight.Text = decTotalHeight.ToString("#,##0") & " mm"
+        lblTotalWidth.Text = decTotalWidth.ToString("#,##0") & " mm"
+        lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
+        lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M³"
+    End Sub
+
     Private Sub ReloadModelFile()
         If m_fileName IsNot Nothing Then
             OpenModelFile(m_fileName)
@@ -177,22 +223,15 @@ Public Class frmMain
     End Sub
 
     Private Sub OpenModelFile(strFile As String)
-        Dim decTotalHeight As Decimal
-        Dim decTotalWidth As Decimal
-        Dim decTotalDepth As Decimal
-        Dim decTotalArea As Decimal
+        Dim units As String = unitsComboBox.SelectedItem.ToString()
+        Dim loadUnit As Geometry.Unit = Geometry.StringToUnit(units)
+        Dim upAxis As Geometry.Axis = If(zUpRadioButton.Checked, Geometry.Axis.Z, Geometry.Axis.Y)
 
-        m_gGeometry = Geometry.LoadWavefrontObj(strFile)
+        m_gGeometry = Geometry.LoadWavefrontObj(strFile, loadUnit, upAxis)
 
-        decTotalHeight = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height).Sum() * 1000
-        decTotalWidth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Width).Sum() * 1000
-        decTotalDepth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Depth).Sum() * 1000
-        decTotalArea = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height * gtgPart.Bounds.Width * gtgPart.Bounds.Depth).Sum()
+        LoadModelStats()
 
-        lblTotalHeight.Text = decTotalHeight.ToString("#,##0") & " mm"
-        lblTotalWidth.Text = decTotalWidth.ToString("#,##0") & " mm"
-        lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
-        lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M²"
+        tsslFile.Text = strFile
 
         tsslFile.Text = strFile
         m_fileName = strFile
@@ -218,10 +257,10 @@ Public Class frmMain
             mdBottom.ModelMatrix = mModelMatrix
             mdIso.ModelMatrix = mModelMatrix * Matrix.Scale(1 / 1.212)
 
-            lblHeight.Text = (m_gtgSelectedObject.Bounds.Height * 1000).ToString("#,##0") & " mm"
-            lblWidth.Text = (m_gtgSelectedObject.Bounds.Width * 1000).ToString("#,##0") & " mm"
-            lblDepth.Text = (m_gtgSelectedObject.Bounds.Depth * 1000).ToString("#,##0") & " mm"
-            lblVolume.Text = (m_gtgSelectedObject.Bounds.Height * m_gtgSelectedObject.Bounds.Width * m_gtgSelectedObject.Bounds.Depth).ToString("#,##0.000") & " M²"
+            lblHeight.Text = (m_gtgSelectedObject.Bounds.Height).ToString("#,##0") & " mm"
+            lblWidth.Text = (m_gtgSelectedObject.Bounds.Width).ToString("#,##0") & " mm"
+            lblDepth.Text = (m_gtgSelectedObject.Bounds.Depth).ToString("#,##0") & " mm"
+            lblVolume.Text = (m_gtgSelectedObject.Bounds.Height * m_gtgSelectedObject.Bounds.Width * m_gtgSelectedObject.Bounds.Depth / 1000000000).ToString("#,##0.000") & " M³"
         Else
             lblHeight.Text = String.Empty
             lblWidth.Text = String.Empty
@@ -235,7 +274,7 @@ Public Class frmMain
 
     Private Sub UpdateTrackBar()
         If m_gtgSelectedObject IsNot Nothing Then
-            Dim intNumSlices As Integer = Math.Ceiling(m_gtgSelectedObject.Bounds.Height * 1000 / nudThickness.Value)
+            Dim intNumSlices As Integer = Math.Ceiling(m_gtgSelectedObject.Bounds.Height / nudThickness.Value)
             tbSlice.Maximum = intNumSlices
             lblSlices.Text = intNumSlices
         Else
@@ -259,8 +298,8 @@ Public Class frmMain
         Dim glgSilhouette As GeometryLineGroup
 
         If m_gtgSelectedObject IsNot Nothing Then
-            vSliceStart = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) / 1000 * (tbSlice.Value + 1), 0)
-            vSliceEnd = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) / 1000 * tbSlice.Value, 0)
+            vSliceStart = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * (tbSlice.Value + 1), 0)
+            vSliceEnd = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * tbSlice.Value, 0)
             vSliceDir = New Vector3(0, -1, 0)
 
             gtgSlice = Slicer.ExtractBetweenPlanes(m_gtgSelectedObject, vSliceStart, vSliceEnd, vSliceDir)

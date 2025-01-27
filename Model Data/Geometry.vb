@@ -1,7 +1,44 @@
 ﻿Imports System.IO
 
 Public Class Geometry
+    Enum Unit
+        [MM]
+        [CM]
+        [M]
+        [IN]
+        [FT]
+    End Enum
+
+    Public Shared Function StringToUnit(name As String) As Unit
+        Select Case name.ToLower()
+            Case "millimeters"
+                return Unit.MM
+            Case "centimeters"
+                return Unit.CM
+            Case "meters"
+                return Unit.M
+            Case "inches"
+                return Unit.IN
+            Case "feet"
+                return Unit.FT
+            Case Else
+                return Unit.MM
+        End Select
+    End Function
+
+    Enum Axis
+        [X]
+        [Y]
+        [Z]
+    End Enum
+
     Private m_bbBounds As BoundingBox
+    Private m_unit As Unit = Unit.MM
+    Private m_upAxis As Axis = Axis.Y
+
+    ''' <summary>
+    ''' Creates a new instance of the <see cref="Geometry"/> class.
+    ''' </>
 
     ''' <summary>
     ''' Describes the objects contained in the geometry data
@@ -16,6 +53,31 @@ Public Class Geometry
             Return m_bbBounds
         End Get
     End Property
+
+    public sub ChangeScale(newUnit As Unit)
+        Dim scale As Single =
+            {   'MM,    CM,    M,      IN,    FT
+                {1,     10,    1000,   25.4,  304.8},'MM
+                {0.1,   1,     100,    2.54,  30.48},'CM
+                {0.001, 0.01,  1,      0.025, 0.305},'M
+                {0.039, 0.394, 39.370, 1,     12   },'IN
+                {0.003, 0.033, 3.281,  0.083, 1    } 'FT
+            }(m_unit, newUnit)
+        For ii As Integer = 0 To (Groups.Count - 1)
+            Groups(ii).Scale(scale)
+        Next ii
+        m_unit = newUnit
+    End sub
+
+    Public Sub ChangeUpAxis(newUpAxis As Axis)
+        If m_upAxis = newUpAxis Then
+            Return
+        End If
+        For ii As Integer = 0 To (Groups.Count - 1)
+            Groups(ii).SwapUpAxis()
+        Next ii
+        m_upAxis = newUpAxis
+    End Sub
 
     ''' <summary>
     ''' Recalculates the axis-aligned bounding box of this geometry data
@@ -124,8 +186,10 @@ Public Class Geometry
     ''' Loads a Wavefront OBJ file (*.obj) from a file.
     ''' </summary>
     ''' <param name="strFileName">The obj file to load.</param>
+    ''' <param name="scale">The scale factor to use.</param>
+    ''' <param name="zUp">If the model is z up or y up.</param>
     ''' <returns>A <see cref="Geometry"/> object describing the model.</returns>
-    Public Shared Function LoadWavefrontObj(strFileName As String) As Geometry
+    Public Shared Function LoadWavefrontObj(strFileName As String, unit As Unit, upAxis As Axis) As Geometry
         Dim gOutput As New Geometry
 
         Dim strLine As String
@@ -192,7 +256,9 @@ Public Class Geometry
                 End While
             End Using
         End Using
-
+        
+        gOutput.ChangeScale(unit)
+        gOutput.ChangeUpAxis(upAxis)
         gOutput.UpdateBounds()
 
         Return gOutput
