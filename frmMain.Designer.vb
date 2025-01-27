@@ -34,6 +34,7 @@ Partial Class frmMain
         Me.MenuStrip1 = New System.Windows.Forms.MenuStrip()
         Me.mnuFile = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFileOpen = New System.Windows.Forms.ToolStripMenuItem()
+        Me.mnuFileReload = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripMenuItem2 = New System.Windows.Forms.ToolStripSeparator()
         Me.mnuFileExport = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFilePrint = New System.Windows.Forms.ToolStripMenuItem()
@@ -45,6 +46,7 @@ Partial Class frmMain
         Me.StatusStrip1 = New System.Windows.Forms.StatusStrip()
         Me.tsslStatus = New System.Windows.Forms.ToolStripStatusLabel()
         Me.tspbProgress = New System.Windows.Forms.ToolStripProgressBar()
+        Me.tsslFile = New System.Windows.Forms.ToolStripStatusLabel()
         Me.Label3 = New System.Windows.Forms.Label()
         Me.lblSlices = New System.Windows.Forms.Label()
         Me.Label4 = New System.Windows.Forms.Label()
@@ -201,7 +203,7 @@ Partial Class frmMain
         '
         'mnuFile
         '
-        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.ToolStripMenuItem2, Me.mnuFileExport, Me.mnuFilePrint, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
+        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.mnuFileReload, Me.ToolStripMenuItem2, Me.mnuFileExport, Me.mnuFilePrint, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
         Me.mnuFile.Name = "mnuFile"
         Me.mnuFile.Size = New System.Drawing.Size(37, 20)
         Me.mnuFile.Text = "&File"
@@ -211,6 +213,13 @@ Partial Class frmMain
         Me.mnuFileOpen.Name = "mnuFileOpen"
         Me.mnuFileOpen.Size = New System.Drawing.Size(152, 22)
         Me.mnuFileOpen.Text = "&Open..."
+        '
+        'mnuFileReload
+        '
+        Me.mnuFileReload.Name = "mnuFileReload"
+        Me.mnuFileReload.Size = New System.Drawing.Size(152, 22)
+        Me.mnuFileReload.Text = "&Reload..."
+        Me.mnuFileReload.Enabled = False
         '
         'ToolStripMenuItem2
         '
@@ -276,7 +285,7 @@ Partial Class frmMain
         '
         'StatusStrip1
         '
-        Me.StatusStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.tsslStatus, Me.tspbProgress})
+        Me.StatusStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.tsslStatus, Me.tspbProgress, Me.tsslFile})
         Me.StatusStrip1.Location = New System.Drawing.Point(0, 601)
         Me.StatusStrip1.Name = "StatusStrip1"
         Me.StatusStrip1.Size = New System.Drawing.Size(935, 22)
@@ -295,6 +304,14 @@ Partial Class frmMain
         Me.tspbProgress.Name = "tspbProgress"
         Me.tspbProgress.Size = New System.Drawing.Size(300, 16)
         Me.tspbProgress.Visible = False
+        '
+        'tsslFile
+        '
+        Me.tsslFile.Name = "tsslFile"
+        Me.tsslFile.Size = New System.Drawing.Size(920, 17)
+        Me.tsslFile.Spring = True
+        Me.tsslFile.TextAlign = System.Drawing.ContentAlignment.MiddleRight
+        Me.tsslFile.Text = "No File Loaded"
         '
         'Label3
         '
@@ -558,6 +575,7 @@ Partial Class frmMain
     Friend WithEvents MenuStrip1 As MenuStrip
     Friend WithEvents mnuFile As ToolStripMenuItem
     Friend WithEvents mnuFileOpen As ToolStripMenuItem
+    Friend WithEvents mnuFileReload As ToolStripMenuItem
     Friend WithEvents ToolStripMenuItem2 As ToolStripSeparator
     Friend WithEvents mnuFileExport As ToolStripMenuItem
     Friend WithEvents mnuFilePrint As ToolStripMenuItem
@@ -569,6 +587,7 @@ Partial Class frmMain
     Friend WithEvents StatusStrip1 As StatusStrip
     Friend WithEvents tsslStatus As ToolStripStatusLabel
     Friend WithEvents tspbProgress As ToolStripProgressBar
+    Friend WithEvents tsslFile As ToolStripStatusLabel
     Friend WithEvents lblSlices As Label
     Friend WithEvents Label3 As Label
     Friend WithEvents lblHeight As Label

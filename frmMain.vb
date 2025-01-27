@@ -7,6 +7,7 @@ Public Class frmMain
     Private m_gtgSelectedObject As GeometryTriangleGroup
     Private WithEvents m_bwSlicer As New BackgroundWorker With {.WorkerReportsProgress = True}
     Private m_lstLayers As List(Of Layer)
+    Private m_fileName As String
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         'mdFront.ViewMatrix = Matrix.Identity() ' .RotationY(Math.PI)
@@ -25,9 +26,13 @@ Public Class frmMain
             ofdOpen.Title = "Open Model File"
             ofdOpen.Filter = "Wavefront OBJ Files|*.obj|All Files (*.*)|*.*"
             If ofdOpen.ShowDialog(Me) = DialogResult.OK Then
-                Call OpenModelFile(ofdOpen.FileName)
+                OpenModelFile(ofdOpen.FileName)
             End If
         End Using
+    End Sub
+
+    Private Sub mnuFileReload_Click(sender As Object, e As EventArgs) Handles mnuFileReload.Click
+        ReloadModelFile()
     End Sub
 
     Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
@@ -165,6 +170,12 @@ Public Class frmMain
         End If
     End Sub
 
+    Private Sub ReloadModelFile()
+        If m_fileName IsNot Nothing Then
+            OpenModelFile(m_fileName)
+        End If
+    End Sub
+
     Private Sub OpenModelFile(strFile As String)
         Dim decTotalHeight As Decimal
         Dim decTotalWidth As Decimal
@@ -183,6 +194,10 @@ Public Class frmMain
         lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
         lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M²"
 
+        tsslFile.Text = strFile
+        m_fileName = strFile
+
+        mnuFileReload.Enabled = True
         mnuFileExport.Enabled = True
         mnuFilePrint.Enabled = True
         mnuFilePrintPreview.Enabled = True
