@@ -90,6 +90,8 @@
     </Compile>
     <Compile Include="Controls\MouseDragEventArgs.vb" />
     <Compile Include="Controls\Direct3D\Renderer.vb" />
+    <Compile Include="Enums\Axis.vb" />
+    <Compile Include="Enums\Unit.vb" />
     <Compile Include="frmMain.vb">
       <SubType>Form</SubType>
     </Compile>

@@ -1,36 +1,22 @@
 ﻿Imports System.IO
 
 Public Class Geometry
-    Enum Unit
-        [MM]
-        [CM]
-        [M]
-        [IN]
-        [FT]
-    End Enum
-
     Public Shared Function StringToUnit(name As String) As Unit
         Select Case name.ToLower()
             Case "millimeters"
-                return Unit.MM
+                Return Unit.MM
             Case "centimeters"
-                return Unit.CM
+                Return Unit.CM
             Case "meters"
-                return Unit.M
+                Return Unit.M
             Case "inches"
-                return Unit.IN
+                Return Unit.IN
             Case "feet"
-                return Unit.FT
+                Return Unit.FT
             Case Else
-                return Unit.MM
+                Return Unit.MM
         End Select
     End Function
-
-    Enum Axis
-        [X]
-        [Y]
-        [Z]
-    End Enum
 
     Private _bounds As BoundingBox
     Private _unit As Unit = Unit.MM
