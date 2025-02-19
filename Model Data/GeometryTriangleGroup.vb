@@ -56,6 +56,29 @@
         Return gtgOutput
     End Function
 
+    Public Sub Scale(scale As Single)
+        For ii As Integer = 0 To (Triangles.Count - 1)
+            Dim gtTriangle As GeometryTriangle = Triangles(ii)
+            Triangles(ii) = New GeometryTriangle(gtTriangle.Color, gtTriangle.V1 * scale, gtTriangle.V2 * scale, gtTriangle.V3 * scale, gtTriangle.V1Normal, gtTriangle.V2Normal, gtTriangle.V3Normal, gtTriangle.SurfaceNormal)
+        Next ii
+        UpdateBounds()
+    End Sub
+
+    Public Sub SwapUpAxis()
+        For ii As Integer = 0 To (Triangles.Count - 1)
+            Dim gtTriangle As GeometryTriangle = Triangles(ii)
+            Triangles(ii) = New GeometryTriangle(gtTriangle.Color,
+                                                 gtTriangle.V1.SwapUpAxis(),
+                                                 gtTriangle.V2.SwapUpAxis(),
+                                                 gtTriangle.V3.SwapUpAxis(),
+                                                 gtTriangle.V1Normal.SwapUpAxis(),
+                                                 gtTriangle.V2Normal.SwapUpAxis(),
+                                                 gtTriangle.V3Normal.SwapUpAxis(),
+                                                 gtTriangle.SurfaceNormal.SwapUpAxis())
+        Next ii
+        UpdateBounds()
+    End Sub
+
     Public Function ToLineGroup(cColor As Color) As GeometryLineGroup
         Dim glgOutput As New GeometryLineGroup
         Dim gtTriangle As GeometryTriangle

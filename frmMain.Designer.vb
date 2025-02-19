@@ -23,6 +23,13 @@ Partial Class frmMain
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Me.tbSlice = New System.Windows.Forms.TrackBar()
+
+        Me.modelSettingsGroupBox = New GroupBox()
+        Me.lblUpAxis = New Label()
+        Me.yUpRadioButton = New RadioButton()
+        Me.zUpRadioButton = New RadioButton()
+        Me.lblUnits = New Label()
+        Me.unitsComboBox = New ComboBox()
         Me.GroupBox1 = New System.Windows.Forms.GroupBox()
         Me.nudThickness = New System.Windows.Forms.NumericUpDown()
         Me.Label1 = New System.Windows.Forms.Label()
@@ -69,6 +76,7 @@ Partial Class frmMain
         Me.lblWidth = New System.Windows.Forms.Label()
         Me.Label7 = New System.Windows.Forms.Label()
         CType(Me.tbSlice, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.modelSettingsGroupBox.SuspendLayout()
         Me.GroupBox1.SuspendLayout()
         CType(Me.nudThickness, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.TableLayoutPanel1.SuspendLayout()
@@ -93,13 +101,67 @@ Partial Class frmMain
         Me.tbSlice.TabIndex = 1
         Me.tbSlice.TickStyle = System.Windows.Forms.TickStyle.TopLeft
         '
+        'modelSettingsGroupBox
+        '
+        Me.modelSettingsGroupBox.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.modelSettingsGroupBox.Controls.Add(Me.lblUpAxis)
+        Me.modelSettingsGroupBox.Controls.Add(Me.yUpRadioButton)
+        Me.modelSettingsGroupBox.Controls.Add(Me.zUpRadioButton)
+        Me.modelSettingsGroupBox.Controls.Add(Me.lblUnits)
+        Me.modelSettingsGroupBox.Controls.Add(Me.unitsComboBox)
+        Me.modelSettingsGroupBox.Location = New System.Drawing.Point(3, 3)
+        Me.modelSettingsGroupBox.Name = "modelSettingsGroupBox"
+        Me.modelSettingsGroupBox.Size = New System.Drawing.Size(325, 70)
+        Me.modelSettingsGroupBox.TabStop = False
+        Me.modelSettingsGroupBox.Text = "Model Settings"
+        '
+        'lblUpAxis
+        '
+        Me.lblUpAxis.AutoSize = True
+        Me.lblUpAxis.Location = New System.Drawing.Point(6, 18)
+        Me.lblUpAxis.Name = "lblUpAxis"
+        Me.lblUpAxis.Text = "Up Axis:"
+        '
+        'yUpRadioButton
+        '
+        Me.yUpRadioButton.AutoSize = True
+        Me.yUpRadioButton.Size = New System.Drawing.Size(50, 24)
+        Me.yUpRadioButton.Checked = True
+        Me.yUpRadioButton.Location = New System.Drawing.Point(Me.lblUpAxis.Left + Me.lblUpAxis.Width + 5, Me.lblUpAxis.Top)
+        Me.yUpRadioButton.Name = "yUpRadioButton"
+        Me.yUpRadioButton.Text = "Y-Up"
+        '
+        'zUpRadioButton
+        '
+        Me.zUpRadioButton.AutoSize = True
+        Me.zUpRadioButton.Location = New System.Drawing.Point(Me.yUpRadioButton.Left + Me.yUpRadioButton.Width + 10, Me.yUpRadioButton.Top)
+        Me.zUpRadioButton.Name = "zUpRadioButton"
+        Me.zUpRadioButton.Text = "Z-Up"
+        '
+        'lblUnits
+        '
+        Me.lblUnits.AutoSize = True
+        Me.lblUnits.Location = New System.Drawing.Point(6, Me.yUpRadioButton.Top + 25)
+        Me.lblUnits.Name = "lblUnits"
+        Me.lblUnits.Text = "Units:"
+        '
+        'unitsComboBox
+        '
+        Me.unitsComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
+        Me.unitsComboBox.FormattingEnabled = True
+        Me.unitsComboBox.Items.AddRange(New Object() {"Millimeters", "Centimeters", "Meters", "Inches", "Feet"})
+        Me.unitsComboBox.Location = New System.Drawing.Point(Me.yUpRadioButton.Left, Me.lblUnits.Top - 3)
+        Me.unitsComboBox.Name = "unitsComboBox"
+        Me.unitsComboBox.SelectedIndex = 0
+        '
         'GroupBox1
         '
         Me.GroupBox1.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.GroupBox1.Controls.Add(Me.nudThickness)
         Me.GroupBox1.Controls.Add(Me.Label1)
-        Me.GroupBox1.Location = New System.Drawing.Point(3, 3)
+        Me.GroupBox1.Location = New System.Drawing.Point(3, 73)
         Me.GroupBox1.Name = "GroupBox1"
         Me.GroupBox1.Size = New System.Drawing.Size(325, 46)
         Me.GroupBox1.TabIndex = 3
@@ -264,9 +326,9 @@ Partial Class frmMain
             Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.GroupBox2.Controls.Add(Me.lbObjects)
-        Me.GroupBox2.Location = New System.Drawing.Point(3, 143)
+        Me.GroupBox2.Location = New System.Drawing.Point(3, 213)
         Me.GroupBox2.Name = "GroupBox2"
-        Me.GroupBox2.Size = New System.Drawing.Size(325, 338)
+        Me.GroupBox2.Size = New System.Drawing.Size(325, 268)
         Me.GroupBox2.TabIndex = 6
         Me.GroupBox2.TabStop = False
         Me.GroupBox2.Text = "Parts"
@@ -280,7 +342,7 @@ Partial Class frmMain
         Me.lbObjects.IntegralHeight = False
         Me.lbObjects.Location = New System.Drawing.Point(6, 19)
         Me.lbObjects.Name = "lbObjects"
-        Me.lbObjects.Size = New System.Drawing.Size(313, 313)
+        Me.lbObjects.Size = New System.Drawing.Size(313, 243)
         Me.lbObjects.TabIndex = 0
         '
         'StatusStrip1
@@ -360,6 +422,7 @@ Partial Class frmMain
         Me.SplitContainer1.Panel1.Controls.Add(Me.GroupBox3)
         Me.SplitContainer1.Panel1.Controls.Add(Me.GroupBox1)
         Me.SplitContainer1.Panel1.Controls.Add(Me.GroupBox2)
+        Me.SplitContainer1.Panel1.Controls.Add(Me.modelSettingsGroupBox)
         '
         'SplitContainer1.Panel2
         '
@@ -381,7 +444,7 @@ Partial Class frmMain
         Me.GroupBox4.Controls.Add(Me.lblTotalWidth)
         Me.GroupBox4.Controls.Add(Me.Label6)
         Me.GroupBox4.Controls.Add(Me.lblTotalHeight)
-        Me.GroupBox4.Location = New System.Drawing.Point(3, 56)
+        Me.GroupBox4.Location = New System.Drawing.Point(3, 126)
         Me.GroupBox4.Name = "GroupBox4"
         Me.GroupBox4.Size = New System.Drawing.Size(325, 81)
         Me.GroupBox4.TabIndex = 8
@@ -540,6 +603,8 @@ Partial Class frmMain
         Me.Name = "frmMain"
         Me.Text = "Slicer"
         CType(Me.tbSlice, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.modelSettingsGroupBox.ResumeLayout(False)
+        Me.modelSettingsGroupBox.PerformLayout()
         Me.GroupBox1.ResumeLayout(False)
         Me.GroupBox1.PerformLayout()
         CType(Me.nudThickness, System.ComponentModel.ISupportInitialize).EndInit()
@@ -609,4 +674,10 @@ Partial Class frmMain
     Friend WithEvents Label11 As Label
     Friend WithEvents lblWidth As Label
     Friend WithEvents Label7 As Label
+    Friend WithEvents modelSettingsGroupBox As GroupBox
+    Friend WithEvents lblUpAxis As Label
+    Friend WithEvents yUpRadioButton As RadioButton
+    Friend WithEvents zUpRadioButton As RadioButton
+    Friend WithEvents lblUnits As Label
+    Friend WithEvents unitsComboBox As ComboBox
 End Class
