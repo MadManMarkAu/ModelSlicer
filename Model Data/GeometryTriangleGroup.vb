@@ -66,19 +66,19 @@
         UpdateBounds()
     End Sub
 
-    Public Sub SwapUpAxis()
+    Public Sub ApplyQuaternion(quat As Quaternion)
         Dim tri As GeometryTriangle
 
         For i As Integer = 0 To (Triangles.Count - 1)
             tri = Triangles(i)
             Triangles(i) = New GeometryTriangle(tri.Color,
-                                                 tri.V1.SwapUpAxis(),
-                                                 tri.V2.SwapUpAxis(),
-                                                 tri.V3.SwapUpAxis(),
-                                                 tri.V1Normal.SwapUpAxis(),
-                                                 tri.V2Normal.SwapUpAxis(),
-                                                 tri.V3Normal.SwapUpAxis(),
-                                                 tri.SurfaceNormal.SwapUpAxis())
+                                                 tri.V1 * quat,
+                                                 tri.V2 * quat,
+                                                 tri.V3 * quat,
+                                                 tri.V1Normal * quat,
+                                                 tri.V2Normal * quat,
+                                                 tri.V3Normal * quat,
+                                                 tri.SurfaceNormal * quat)
         Next i
         UpdateBounds()
     End Sub

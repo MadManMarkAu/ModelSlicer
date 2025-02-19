@@ -81,28 +81,16 @@
 
     Public Shared Function FromVectors(fromVector As Vector3, toVector As Vector3) As Quaternion
         Dim cross As Vector3 = Vector3.Cross(fromVector, toVector)
-        Dim cosTheta As Single = Vector3.DotProduct(fromVector, toVector)
-        Dim k As Single
+        Dim w As Single
+        Dim output As Quaternion
 
-        If cosTheta >= 1 Then
-            Return Identity()
-        End If
+        w = Math.Sqrt(fromVector.LengthSquared() * toVector.LengthSquared()) + Vector3.DotProduct(fromVector, toVector)
 
-        k = Math.Sqrt(fromVector.LengthSquared() * toVector.LengthSquared())
+        output = New Quaternion(cross.X, cross.Y, cross.Z, w)
 
-        If cosTheta / k <= -1 Then
-            If Vector3.DotProduct(fromVector, New Vector3(1, 0, 0)) < 1 Then
-                cross = Vector3.Cross(fromVector, New Vector3(1, 0, 0))
-                k = 0
-                cosTheta = 0
-            Else
-                cross = Vector3.Cross(fromVector, New Vector3(0, 1, 0))
-                k = 0
-                cosTheta = 0
-            End If
-        End If
+        output.Normalize()
 
-        Return New Quaternion(cross.X, cross.Y, cross.Z, k + cosTheta)
+        Return output
     End Function
 
     Public Shared Operator *(quat As Quaternion, vec As Vector3) As Vector3

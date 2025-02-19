@@ -52,12 +52,44 @@ Public Class Geometry
     End Sub
 
     Public Sub ChangeUpAxis(newUpAxis As Axis)
+        Dim oldUp As Vector3
+        Dim newUp As Vector3
+        Dim quat As Quaternion
+
         If _upAxis = newUpAxis Then
-            Return
+            'Return
         End If
+
+        Select Case _upAxis
+            Case Axis.X
+                oldUp = New Vector3(1, 0, 0)
+
+            Case Axis.Y
+                oldUp = New Vector3(0, 1, 0)
+
+            Case Axis.Z
+                oldUp = New Vector3(0, 0, 1)
+
+        End Select
+
+        Select Case newUpAxis
+            Case Axis.X
+                newUp = New Vector3(1, 0, 0)
+
+            Case Axis.Y
+                newUp = New Vector3(0, 1, 0)
+
+            Case Axis.Z
+                newUp = New Vector3(0, 0, 1)
+
+        End Select
+
+        quat = Quaternion.FromVectors(oldUp, newUp)
+
         For i As Integer = 0 To (Groups.Count - 1)
-            Groups(i).SwapUpAxis()
+            Groups(i).ApplyQuaternion(quat)
         Next
+
         _upAxis = newUpAxis
     End Sub
 
