@@ -4,19 +4,19 @@
     Public Z As Single
     Public W As Single
 
-    Public Sub New(sngX As Single, sngY As Single, sngZ As Single, sngW As Single)
-        X = sngX
-        Y = sngY
-        Z = sngZ
-        W = sngW
+    Public Sub New(xValue As Single, yValue As Single, zValue As Single, wValue As Single)
+        X = xValue
+        Y = yValue
+        Z = zValue
+        W = wValue
     End Sub
 
-    Public Sub New(vAxis As Vector3, sngAngle As Single)
-        vAxis.Normalize()
-        X = vAxis.X * Math.Sin(sngAngle / 2)
-        Y = vAxis.Y * Math.Sin(sngAngle / 2)
-        Z = vAxis.Z * Math.Sin(sngAngle / 2)
-        W = Math.Cos(sngAngle / 2)
+    Public Sub New(axis As Vector3, angle As Single)
+        axis.Normalize()
+        X = axis.X * Math.Sin(angle / 2)
+        Y = axis.Y * Math.Sin(angle / 2)
+        Z = axis.Z * Math.Sin(angle / 2)
+        W = Math.Cos(angle / 2)
     End Sub
 
     Public Function Magnitude() As Single
@@ -24,12 +24,12 @@
     End Function
 
     Public Sub Normalize()
-        Dim sngMag As Single = Magnitude()
+        Dim mag As Single = Magnitude()
 
-        X /= sngMag
-        Y /= sngMag
-        Z /= sngMag
-        W /= sngMag
+        X /= mag
+        Y /= mag
+        Z /= mag
+        W /= mag
     End Sub
 
     Public Function Conjugate() As Quaternion
@@ -73,58 +73,58 @@
         Return New Quaternion(0, 0, 0, 1)
     End Function
 
-    Public Shared Function Normalize(qQuat As Quaternion) As Quaternion
-        Dim sngMag As Single = qQuat.Magnitude()
+    Public Shared Function Normalize(quat As Quaternion) As Quaternion
+        Dim mag As Single = quat.Magnitude()
 
-        Return New Quaternion(qQuat.X / sngMag, qQuat.Y / sngMag, qQuat.Z / sngMag, qQuat.W / sngMag)
+        Return New Quaternion(quat.X / mag, quat.Y / mag, quat.Z / mag, quat.W / mag)
     End Function
 
-    Public Shared Function FromVectors(vFrom As Vector3, vTo As Vector3) As Quaternion
-        Dim vCross As Vector3 = Vector3.Cross(vFrom, vTo)
-        Dim sngCosTheta As Single = Vector3.DotProduct(vFrom, vTo)
-        Dim sngK As Single
+    Public Shared Function FromVectors(fromVector As Vector3, toVector As Vector3) As Quaternion
+        Dim cross As Vector3 = Vector3.Cross(fromVector, toVector)
+        Dim cosTheta As Single = Vector3.DotProduct(fromVector, toVector)
+        Dim k As Single
 
-        If sngCosTheta >= 1 Then
-            Return Quaternion.Identity()
+        If cosTheta >= 1 Then
+            Return Identity()
         End If
 
-        sngK = Math.Sqrt(vFrom.LengthSquared() * vTo.LengthSquared())
+        k = Math.Sqrt(fromVector.LengthSquared() * toVector.LengthSquared())
 
-        If sngCosTheta / sngK <= -1 Then
-            If Vector3.DotProduct(vFrom, New Vector3(1, 0, 0)) < 1 Then
-                vCross = Vector3.Cross(vFrom, New Vector3(1, 0, 0))
-                sngK = 0
-                sngCosTheta = 0
+        If cosTheta / k <= -1 Then
+            If Vector3.DotProduct(fromVector, New Vector3(1, 0, 0)) < 1 Then
+                cross = Vector3.Cross(fromVector, New Vector3(1, 0, 0))
+                k = 0
+                cosTheta = 0
             Else
-                vCross = Vector3.Cross(vFrom, New Vector3(0, 1, 0))
-                sngK = 0
-                sngCosTheta = 0
+                cross = Vector3.Cross(fromVector, New Vector3(0, 1, 0))
+                k = 0
+                cosTheta = 0
             End If
         End If
 
-        Return New Quaternion(vCross.X, vCross.Y, vCross.Z, sngK + sngCosTheta)
+        Return New Quaternion(cross.X, cross.Y, cross.Z, k + cosTheta)
     End Function
 
-    Public Shared Operator *(qQuat As Quaternion, vVec As Vector3) As Vector3
-        Dim qVec As New Quaternion(vVec.X, vVec.Y, vVec.Z, 0)
-        Dim qRes As Quaternion = qQuat * qVec * qQuat.Conjugate()
+    Public Shared Operator *(quat As Quaternion, vec As Vector3) As Vector3
+        Dim quatVec As New Quaternion(vec.X, vec.Y, vec.Z, 0)
+        Dim result As Quaternion = quat * quatVec * quat.Conjugate()
 
-        Return New Vector3(qRes.X, qRes.Y, qRes.Z)
+        Return New Vector3(result.X, result.Y, result.Z)
     End Operator
 
-    Public Shared Operator *(vVec As Vector3, qQuat As Quaternion) As Vector3
-        Dim qVec As New Quaternion(vVec.X, vVec.Y, vVec.Z, 0)
-        Dim qRes As Quaternion = qQuat * qVec * qQuat.Conjugate()
+    Public Shared Operator *(vec As Vector3, quat As Quaternion) As Vector3
+        Dim quatVec As New Quaternion(vec.X, vec.Y, vec.Z, 0)
+        Dim result As Quaternion = quat * quatVec * quat.Conjugate()
 
-        Return New Vector3(qRes.X, qRes.Y, qRes.Z)
+        Return New Vector3(result.X, result.Y, result.Z)
     End Operator
 
-    Public Shared Operator *(qLeft As Quaternion, qRight As Quaternion) As Quaternion
+    Public Shared Operator *(left As Quaternion, right As Quaternion) As Quaternion
         Return New Quaternion(
-            qLeft.W * qRight.X + qLeft.X * qRight.W + qLeft.Y * qRight.Z - qLeft.Z * qRight.Y,
-            qLeft.W * qRight.Y - qLeft.X * qRight.Z + qLeft.Y * qRight.W + qLeft.Z * qRight.X,
-            qLeft.W * qRight.Z + qLeft.X * qRight.Y - qLeft.Y * qRight.X + qLeft.Z * qRight.W,
-            qLeft.W * qRight.W - qLeft.X * qRight.X - qLeft.Y * qRight.Y - qLeft.Z * qRight.Z
+            left.W * right.X + left.X * right.W + left.Y * right.Z - left.Z * right.Y,
+            left.W * right.Y - left.X * right.Z + left.Y * right.W + left.Z * right.X,
+            left.W * right.Z + left.X * right.Y - left.Y * right.X + left.Z * right.W,
+            left.W * right.W - left.X * right.X - left.Y * right.Y - left.Z * right.Z
         )
     End Operator
 End Structure

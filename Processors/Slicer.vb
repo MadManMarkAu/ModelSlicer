@@ -2,242 +2,238 @@
     Private Sub New()
     End Sub
 
-    Public Shared Function Slice(gtgGroup As GeometryTriangleGroup, sngThickness As Single, cTopColor As Color, cBottomColor As Color, cContentColor As Color) As List(Of Layer)
-        Dim lstOutput As New List(Of Layer)
-        Dim sngYStart As Single
-        Dim vStartPlanePoint As Vector3
-        Dim vEndPlanePoint As Vector3
-        Dim vPlaneNormal As Vector3
-        Dim glgTopOutline As GeometryLineGroup
-        Dim glgBottomOutline As GeometryLineGroup
-        Dim gtgContents As GeometryTriangleGroup
+    Public Shared Function Slice(group As GeometryTriangleGroup, thickness As Single, topColor As Color, bottomColor As Color, contentColor As Color) As List(Of Layer)
+        Dim output As New List(Of Layer)
+        Dim yStart As Single
+        Dim startPlanePoint As Vector3
+        Dim endPlanePoint As Vector3
+        Dim planeNormal As Vector3
+        Dim topOutline As GeometryLineGroup
+        Dim bottomOutline As GeometryLineGroup
+        Dim contents As GeometryTriangleGroup
 
-        sngYStart = gtgGroup.Bounds.Minimum.Y
-        vPlaneNormal = New Vector3(0, -1, 0)
+        yStart = group.Bounds.Minimum.Y
+        planeNormal = New Vector3(0, -1, 0)
 
-        While sngYStart < gtgGroup.Bounds.Maximum.Y
-            vStartPlanePoint = New Vector3(0, sngYStart + sngThickness, 0)
-            vEndPlanePoint = New Vector3(0, sngYStart, 0)
+        While yStart < group.Bounds.Maximum.Y
+            startPlanePoint = New Vector3(0, yStart + thickness, 0)
+            endPlanePoint = New Vector3(0, yStart, 0)
 
-            glgTopOutline = OutlineModelPlane(gtgGroup, vEndPlanePoint, vPlaneNormal, cTopColor)
-            glgBottomOutline = OutlineModelPlane(gtgGroup, vStartPlanePoint, vPlaneNormal, cBottomColor)
-            gtgContents = ExtractBetweenPlanes(gtgGroup, vStartPlanePoint, vEndPlanePoint, vPlaneNormal).CloneWithColor(cContentColor)
+            topOutline = OutlineModelPlane(group, endPlanePoint, planeNormal, topColor)
+            bottomOutline = OutlineModelPlane(group, startPlanePoint, planeNormal, bottomColor)
+            contents = ExtractBetweenPlanes(group, startPlanePoint, endPlanePoint, planeNormal).CloneWithColor(contentColor)
 
-            lstOutput.Add(New Layer(glgTopOutline, glgBottomOutline, gtgContents))
+            output.Add(New Layer(topOutline, bottomOutline, contents))
 
-            sngYStart += sngThickness
+            yStart += thickness
         End While
 
-        Return lstOutput
+        Return output
     End Function
 
-    Public Shared Function Slice(gtgGroup As GeometryTriangleGroup, vStartPlanePoint As Vector3, vEndPlanePoint As Vector3, vPlaneNormal As Vector3, cTopColor As Color, cBottomColor As Color, cContentColor As Color) As Layer
-        Dim glgTopOutline As GeometryLineGroup
-        Dim glgBottomOutline As GeometryLineGroup
-        Dim gtgContents As GeometryTriangleGroup
+    Public Shared Function Slice(group As GeometryTriangleGroup, startPlanePoint As Vector3, endPlanePoint As Vector3, planeNormal As Vector3, topColor As Color, bottomColor As Color, contentColor As Color) As Layer
+        Dim topOutline As GeometryLineGroup
+        Dim bottomOutline As GeometryLineGroup
+        Dim contents As GeometryTriangleGroup
 
-        glgTopOutline = OutlineModelPlane(gtgGroup, vEndPlanePoint, vPlaneNormal, cTopColor)
-        glgBottomOutline = OutlineModelPlane(gtgGroup, vStartPlanePoint, vPlaneNormal, cBottomColor)
-        gtgContents = ExtractBetweenPlanes(gtgGroup, vStartPlanePoint, vEndPlanePoint, vPlaneNormal).CloneWithColor(cContentColor)
+        topOutline = OutlineModelPlane(group, endPlanePoint, planeNormal, topColor)
+        bottomOutline = OutlineModelPlane(group, startPlanePoint, planeNormal, bottomColor)
+        contents = ExtractBetweenPlanes(group, startPlanePoint, endPlanePoint, planeNormal).CloneWithColor(contentColor)
 
-        Return New Layer(glgTopOutline, glgBottomOutline, gtgContents)
+        Return New Layer(topOutline, bottomOutline, contents)
     End Function
 
 
-    Public Shared Function OutlineModelPlane(gGeometry As Geometry, vPlanePoint As Vector3, vPlaneNormal As Vector3, cColor As Color) As GeometryLineGroup
-        Dim glgOutput As New GeometryLineGroup
-        Dim gsSegment As GeometryTriangleGroup
+    Public Shared Function OutlineModelPlane(geometry As Geometry, planePoint As Vector3, planeNormal As Vector3, color As Color) As GeometryLineGroup
+        Dim output As New GeometryLineGroup
 
-        For Each gsSegment In gGeometry.Groups
-            glgOutput.Lines.AddRange(OutlineModelPlane(gsSegment, vPlanePoint, vPlaneNormal, cColor).Lines)
+        For Each segment As GeometryTriangleGroup In geometry.Groups
+            output.Lines.AddRange(OutlineModelPlane(segment, planePoint, planeNormal, color).Lines)
         Next
 
-        glgOutput.UpdateBounds()
+        output.UpdateBounds()
 
-        Return glgOutput
+        Return output
     End Function
 
-    Public Shared Function ExtractBetweenPlanes(gGeometry As Geometry, vStartPlanePoint As Vector3, vEndPlanePoint As Vector3, vPlaneNormal As Vector3) As Geometry
-        Return Bifurcate(Bifurcate(gGeometry, vStartPlanePoint, vPlaneNormal).Above, vEndPlanePoint, vPlaneNormal).Below
+    Public Shared Function ExtractBetweenPlanes(geometry As Geometry, startPlanePoint As Vector3, endPlanePoint As Vector3, planeNormal As Vector3) As Geometry
+        Return Bifurcate(Bifurcate(geometry, startPlanePoint, planeNormal).Above, endPlanePoint, planeNormal).Below
     End Function
 
-    Public Shared Function Bifurcate(gGeometry As Geometry, vPlanePoint As Vector3, vPlaneNormal As Vector3) As (Above As Geometry, Below As Geometry)
-        Dim tOutput As (Above As Geometry, Below As Geometry)
-        Dim tBifurcateResult As (Above As GeometryTriangleGroup, Below As GeometryTriangleGroup)
-        Dim gtgGroup As GeometryTriangleGroup
+    Public Shared Function Bifurcate(geometry As Geometry, planePoint As Vector3, planeNormal As Vector3) As (Above As Geometry, Below As Geometry)
+        Dim output As (Above As Geometry, Below As Geometry)
+        Dim bifurcateResult As (Above As GeometryTriangleGroup, Below As GeometryTriangleGroup)
 
-        tOutput = (New Geometry, New Geometry)
+        output = (New Geometry, New Geometry)
 
-        For Each gtgGroup In gGeometry.Groups
-            tBifurcateResult = Bifurcate(gtgGroup, vPlanePoint, vPlaneNormal)
+        For Each group As GeometryTriangleGroup In geometry.Groups
+            bifurcateResult = Bifurcate(group, planePoint, planeNormal)
 
-            If tBifurcateResult.Above.Triangles.Count > 0 Then
-                tOutput.Above.Groups.Add(tBifurcateResult.Above)
+            If bifurcateResult.Above.Triangles.Count > 0 Then
+                output.Above.Groups.Add(bifurcateResult.Above)
             End If
 
-            If tBifurcateResult.Below.Triangles.Count > 0 Then
-                tOutput.Below.Groups.Add(tBifurcateResult.Below)
-            End If
-        Next
-
-        tOutput.Above.UpdateBounds()
-        tOutput.Below.UpdateBounds()
-
-        Return tOutput
-    End Function
-
-    Public Shared Function OutlineModelPlane(gtgGroup As GeometryTriangleGroup, vPlanePoint As Vector3, vPlaneNormal As Vector3, cColor As Color) As GeometryLineGroup
-        Dim glgOutput As New GeometryLineGroup
-        Dim gtTriangle As GeometryTriangle
-        Dim tResult1 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
-        Dim tResult2 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
-        Dim tResult3 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
-
-        glgOutput.Name = gtgGroup.Name
-
-        For Each gtTriangle In gtgGroup.Triangles
-            tResult1 = IntersectLinePlane(vPlanePoint, vPlaneNormal, gtTriangle.V1, gtTriangle.V2, gtTriangle.V1Normal, gtTriangle.V2Normal)
-            tResult2 = IntersectLinePlane(vPlanePoint, vPlaneNormal, gtTriangle.V2, gtTriangle.V3, gtTriangle.V2Normal, gtTriangle.V3Normal)
-            tResult3 = IntersectLinePlane(vPlanePoint, vPlaneNormal, gtTriangle.V3, gtTriangle.V1, gtTriangle.V3Normal, gtTriangle.V1Normal)
-
-            If tResult1.Valid AndAlso tResult2.Valid Then
-                glgOutput.Lines.Add(New GeometryLine(cColor, tResult1.Point, tResult2.Point, tResult1.Normal, tResult2.Normal, gtTriangle.SurfaceNormal))
-            End If
-
-            If tResult2.Valid AndAlso tResult3.Valid Then
-                glgOutput.Lines.Add(New GeometryLine(cColor, tResult2.Point, tResult3.Point, tResult2.Normal, tResult3.Normal, gtTriangle.SurfaceNormal))
-            End If
-
-            If tResult3.Valid AndAlso tResult1.Valid Then
-                glgOutput.Lines.Add(New GeometryLine(cColor, tResult3.Point, tResult1.Point, tResult3.Normal, tResult1.Normal, gtTriangle.SurfaceNormal))
+            If bifurcateResult.Below.Triangles.Count > 0 Then
+                output.Below.Groups.Add(bifurcateResult.Below)
             End If
         Next
 
-        glgOutput.UpdateBounds()
+        output.Above.UpdateBounds()
+        output.Below.UpdateBounds()
 
-        Return glgOutput
+        Return output
     End Function
 
-    Public Shared Function ExtractBetweenPlanes(gtgGroup As GeometryTriangleGroup, vStartPlanePoint As Vector3, vEndPlanePoint As Vector3, vPlaneNormal As Vector3) As GeometryTriangleGroup
-        Return Bifurcate(Bifurcate(gtgGroup, vStartPlanePoint, vPlaneNormal).Above, vEndPlanePoint, vPlaneNormal).Below
-    End Function
+    Public Shared Function OutlineModelPlane(group As GeometryTriangleGroup, planePoint As Vector3, planeNormal As Vector3, color As Color) As GeometryLineGroup
+        Dim output As New GeometryLineGroup
+        Dim result1 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
+        Dim result2 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
+        Dim result3 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
 
-    Public Shared Function Bifurcate(gtgGroup As GeometryTriangleGroup, vPlanePoint As Vector3, vPlaneNormal As Vector3) As (Above As GeometryTriangleGroup, Below As GeometryTriangleGroup)
-        Dim tOutput As (Above As GeometryTriangleGroup, Below As GeometryTriangleGroup) = (New GeometryTriangleGroup, New GeometryTriangleGroup)
-        Dim gtTriangle As GeometryTriangle
-        Dim tResult As (Above As List(Of GeometryTriangle), Below As List(Of GeometryTriangle))
+        output.Name = group.Name
 
-        tOutput.Above.Name = gtgGroup.Name
-        tOutput.Below.Name = gtgGroup.Name
+        For Each tri As GeometryTriangle In group.Triangles
+            result1 = IntersectLinePlane(planePoint, planeNormal, tri.V1, tri.V2, tri.V1Normal, tri.V2Normal)
+            result2 = IntersectLinePlane(planePoint, planeNormal, tri.V2, tri.V3, tri.V2Normal, tri.V3Normal)
+            result3 = IntersectLinePlane(planePoint, planeNormal, tri.V3, tri.V1, tri.V3Normal, tri.V1Normal)
 
-        For Each gtTriangle In gtgGroup.Triangles
-            tResult = Bifurcate(gtTriangle, vPlanePoint, vPlaneNormal)
+            If result1.Valid AndAlso result2.Valid Then
+                output.Lines.Add(New GeometryLine(color, result1.Point, result2.Point, result1.Normal, result2.Normal, tri.SurfaceNormal))
+            End If
 
-            tOutput.Above.Triangles.AddRange(tResult.Above)
-            tOutput.Below.Triangles.AddRange(tResult.Below)
+            If result2.Valid AndAlso result3.Valid Then
+                output.Lines.Add(New GeometryLine(color, result2.Point, result3.Point, result2.Normal, result3.Normal, tri.SurfaceNormal))
+            End If
+
+            If result3.Valid AndAlso result1.Valid Then
+                output.Lines.Add(New GeometryLine(color, result3.Point, result1.Point, result3.Normal, result1.Normal, tri.SurfaceNormal))
+            End If
         Next
 
-        tOutput.Above.UpdateBounds()
-        tOutput.Below.UpdateBounds()
+        output.UpdateBounds()
 
-        Return tOutput
+        Return output
+    End Function
+
+    Public Shared Function ExtractBetweenPlanes(group As GeometryTriangleGroup, startPlanePoint As Vector3, endPlanePoint As Vector3, planeNormal As Vector3) As GeometryTriangleGroup
+        Return Bifurcate(Bifurcate(group, startPlanePoint, planeNormal).Above, endPlanePoint, planeNormal).Below
+    End Function
+
+    Public Shared Function Bifurcate(group As GeometryTriangleGroup, planePoint As Vector3, planeNormal As Vector3) As (Above As GeometryTriangleGroup, Below As GeometryTriangleGroup)
+        Dim output As (Above As GeometryTriangleGroup, Below As GeometryTriangleGroup) = (New GeometryTriangleGroup, New GeometryTriangleGroup)
+        Dim result As (Above As List(Of GeometryTriangle), Below As List(Of GeometryTriangle))
+
+        output.Above.Name = group.Name
+        output.Below.Name = group.Name
+
+        For Each tri As GeometryTriangle In group.Triangles
+            result = Bifurcate(tri, planePoint, planeNormal)
+
+            output.Above.Triangles.AddRange(result.Above)
+            output.Below.Triangles.AddRange(result.Below)
+        Next
+
+        output.Above.UpdateBounds()
+        output.Below.UpdateBounds()
+
+        Return output
     End Function
 
     ' This function should preserve winding direction when creating new triangles (untested)
-    Public Shared Function Bifurcate(gtTriangle As GeometryTriangle, vPlanePoint As Vector3, vPlaneNormal As Vector3) As (Above As List(Of GeometryTriangle), Below As List(Of GeometryTriangle))
-        Dim tOutput As (Above As List(Of GeometryTriangle), Below As List(Of GeometryTriangle)) = (New List(Of GeometryTriangle), New List(Of GeometryTriangle))
-        Dim tPoint1 As (Point As Vector3, IsAbove As Boolean, Normal As Vector3)
-        Dim tPoint2 As (Point As Vector3, IsAbove As Boolean, Normal As Vector3)
-        Dim tPoint3 As (Point As Vector3, IsAbove As Boolean, Normal As Vector3)
-        Dim tPointTemp As (Point As Vector3, IsAbove As Boolean, Normal As Vector3)
-        Dim intAboveCount As Integer
-        Dim tResult1 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
-        Dim tResult2 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
+    Public Shared Function Bifurcate(tri As GeometryTriangle, planePoint As Vector3, planeNormal As Vector3) As (Above As List(Of GeometryTriangle), Below As List(Of GeometryTriangle))
+        Dim output As (Above As List(Of GeometryTriangle), Below As List(Of GeometryTriangle)) = (New List(Of GeometryTriangle), New List(Of GeometryTriangle))
+        Dim point1 As (Point As Vector3, IsAbove As Boolean, Normal As Vector3)
+        Dim point2 As (Point As Vector3, IsAbove As Boolean, Normal As Vector3)
+        Dim point3 As (Point As Vector3, IsAbove As Boolean, Normal As Vector3)
+        Dim pointTemp As (Point As Vector3, IsAbove As Boolean, Normal As Vector3)
+        Dim aboveCount As Integer
+        Dim result1 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
+        Dim result2 As (Valid As Boolean, Point As Vector3, Normal As Vector3)
 
-        tPoint1 = (gtTriangle.V1, IsPointAbovePlane(vPlanePoint, vPlaneNormal, gtTriangle.V1), gtTriangle.V1Normal)
-        tPoint2 = (gtTriangle.V2, IsPointAbovePlane(vPlanePoint, vPlaneNormal, gtTriangle.V2), gtTriangle.V2Normal)
-        tPoint3 = (gtTriangle.V3, IsPointAbovePlane(vPlanePoint, vPlaneNormal, gtTriangle.V3), gtTriangle.V3Normal)
+        point1 = (tri.V1, IsPointAbovePlane(planePoint, planeNormal, tri.V1), tri.V1Normal)
+        point2 = (tri.V2, IsPointAbovePlane(planePoint, planeNormal, tri.V2), tri.V2Normal)
+        point3 = (tri.V3, IsPointAbovePlane(planePoint, planeNormal, tri.V3), tri.V3Normal)
 
         ' Count how many points are above the plane
-        If tPoint1.IsAbove Then
-            intAboveCount += 1
+        If point1.IsAbove Then
+            aboveCount += 1
         End If
-        If tPoint2.IsAbove Then
-            intAboveCount += 1
+        If point2.IsAbove Then
+            aboveCount += 1
         End If
-        If tPoint3.IsAbove Then
-            intAboveCount += 1
+        If point3.IsAbove Then
+            aboveCount += 1
         End If
 
-        Select Case intAboveCount
+        Select Case aboveCount
             Case 0
-                tOutput.Below.Add(gtTriangle)
+                output.Below.Add(tri)
 
             Case 1
                 ' Rotate the triangle until the first point is above
-                While tPoint1.IsAbove = False
-                    tPointTemp = tPoint1
-                    tPoint1 = tPoint3
-                    tPoint3 = tPoint2
-                    tPoint2 = tPointTemp
+                While point1.IsAbove = False
+                    pointTemp = point1
+                    point1 = point3
+                    point3 = point2
+                    point2 = pointTemp
                 End While
 
-                tResult1 = IntersectLinePlane(vPlanePoint, vPlaneNormal, tPoint1.Point, tPoint2.Point, tPoint1.Normal, tPoint2.Normal)
-                tResult2 = IntersectLinePlane(vPlanePoint, vPlaneNormal, tPoint1.Point, tPoint3.Point, tPoint1.Normal, tPoint3.Normal)
+                result1 = IntersectLinePlane(planePoint, planeNormal, point1.Point, point2.Point, point1.Normal, point2.Normal)
+                result2 = IntersectLinePlane(planePoint, planeNormal, point1.Point, point3.Point, point1.Normal, point3.Normal)
 
-                tOutput.Above.Add(New GeometryTriangle(gtTriangle.Color, tPoint1.Point, tResult1.Point, tResult2.Point, tPoint1.Normal, tResult1.Normal, tResult2.Normal, gtTriangle.SurfaceNormal))
-                tOutput.Below.Add(New GeometryTriangle(gtTriangle.Color, tResult2.Point, tResult1.Point, tPoint2.Point, tResult2.Normal, tResult1.Normal, tPoint2.Normal, gtTriangle.SurfaceNormal))
-                tOutput.Below.Add(New GeometryTriangle(gtTriangle.Color, tResult2.Point, tPoint2.Point, tPoint3.Point, tResult2.Normal, tPoint2.Normal, tPoint3.Normal, gtTriangle.SurfaceNormal))
+                output.Above.Add(New GeometryTriangle(tri.Color, point1.Point, result1.Point, result2.Point, point1.Normal, result1.Normal, result2.Normal, tri.SurfaceNormal))
+                output.Below.Add(New GeometryTriangle(tri.Color, result2.Point, result1.Point, point2.Point, result2.Normal, result1.Normal, point2.Normal, tri.SurfaceNormal))
+                output.Below.Add(New GeometryTriangle(tri.Color, result2.Point, point2.Point, point3.Point, result2.Normal, point2.Normal, point3.Normal, tri.SurfaceNormal))
 
             Case 2
                 ' Rotate the triangle until the first two points are above
-                While tPoint1.IsAbove = False OrElse tPoint2.IsAbove = False
-                    tPointTemp = tPoint1
-                    tPoint1 = tPoint3
-                    tPoint3 = tPoint2
-                    tPoint2 = tPointTemp
+                While point1.IsAbove = False OrElse point2.IsAbove = False
+                    pointTemp = point1
+                    point1 = point3
+                    point3 = point2
+                    point2 = pointTemp
                 End While
 
-                tResult1 = IntersectLinePlane(vPlanePoint, vPlaneNormal, tPoint1.Point, tPoint3.Point, tPoint1.Normal, tPoint3.Normal)
-                tResult2 = IntersectLinePlane(vPlanePoint, vPlaneNormal, tPoint2.Point, tPoint3.Point, tPoint2.Normal, tPoint3.Normal)
+                result1 = IntersectLinePlane(planePoint, planeNormal, point1.Point, point3.Point, point1.Normal, point3.Normal)
+                result2 = IntersectLinePlane(planePoint, planeNormal, point2.Point, point3.Point, point2.Normal, point3.Normal)
 
-                tOutput.Below.Add(New GeometryTriangle(gtTriangle.Color, tResult1.Point, tResult2.Point, tPoint3.Point, tResult1.Normal, tResult2.Normal, tPoint3.Normal, gtTriangle.SurfaceNormal))
-                tOutput.Above.Add(New GeometryTriangle(gtTriangle.Color, tPoint1.Point, tPoint2.Point, tResult2.Point, tPoint1.Normal, tPoint2.Normal, tResult2.Normal, gtTriangle.SurfaceNormal))
-                tOutput.Above.Add(New GeometryTriangle(gtTriangle.Color, tPoint1.Point, tResult2.Point, tResult1.Point, tPoint1.Normal, tResult2.Normal, tResult1.Normal, gtTriangle.SurfaceNormal))
+                output.Below.Add(New GeometryTriangle(tri.Color, result1.Point, result2.Point, point3.Point, result1.Normal, result2.Normal, point3.Normal, tri.SurfaceNormal))
+                output.Above.Add(New GeometryTriangle(tri.Color, point1.Point, point2.Point, result2.Point, point1.Normal, point2.Normal, result2.Normal, tri.SurfaceNormal))
+                output.Above.Add(New GeometryTriangle(tri.Color, point1.Point, result2.Point, result1.Point, point1.Normal, result2.Normal, result1.Normal, tri.SurfaceNormal))
 
             Case 3
-                tOutput.Above.Add(gtTriangle)
+                output.Above.Add(tri)
 
         End Select
 
-        Return tOutput
+        Return output
     End Function
 
-    Private Shared Function IntersectLinePlane(vPlanePoint As Vector3, vPlaneNormal As Vector3, vLinePoint1 As Vector3, vLinePoint2 As Vector3, vLineNormal1 As Vector3, vLineNormal2 As Vector3) As (Valid As Boolean, Point As Vector3, Normal As Vector3)
-        Dim vLineDir As Vector3
-        Dim vLineDirNormalized As Vector3
-        Dim sngDistanceFromLineStart As Single
-        Dim sngRatio As Single
+    Private Shared Function IntersectLinePlane(planePoint As Vector3, planeNormal As Vector3, linePoint1 As Vector3, linePoint2 As Vector3, lineNormal1 As Vector3, lineNormal2 As Vector3) As (Valid As Boolean, Point As Vector3, Normal As Vector3)
+        Dim lineDir As Vector3
+        Dim lineDirNormalized As Vector3
+        Dim distanceFromLineStart As Single
+        Dim ratio As Single
 
-        vLineDir = vLinePoint2 - vLinePoint1
-        vLineDirNormalized = Vector3.Normalize(vLineDir)
+        lineDir = linePoint2 - linePoint1
+        lineDirNormalized = Vector3.Normalize(lineDir)
 
-        If Vector3.DotProduct(vPlaneNormal, vLineDirNormalized) = 0 Then
+        If Vector3.DotProduct(planeNormal, lineDirNormalized) = 0 Then
             Return (False, Nothing, Nothing) ' Line is parallel to plane
         End If
 
-        sngDistanceFromLineStart = (Vector3.DotProduct(vPlaneNormal, vPlanePoint) - Vector3.DotProduct(vPlaneNormal, vLinePoint1)) / Vector3.DotProduct(vPlaneNormal, vLineDirNormalized)
+        distanceFromLineStart = (Vector3.DotProduct(planeNormal, planePoint) - Vector3.DotProduct(planeNormal, linePoint1)) / Vector3.DotProduct(planeNormal, lineDirNormalized)
 
-        If sngDistanceFromLineStart < -0.0000001 OrElse sngDistanceFromLineStart > vLineDir.Length() + 0.0000001 Then
+        If distanceFromLineStart < -0.0000001 OrElse distanceFromLineStart > lineDir.Length() + 0.0000001 Then
             Return (False, Nothing, Nothing) ' Line intersects plane before the start, or after the end
         End If
 
-        sngRatio = sngDistanceFromLineStart / vLineDir.Length()
+        ratio = distanceFromLineStart / lineDir.Length()
 
-        Return (True, vLinePoint1 + vLineDirNormalized * sngDistanceFromLineStart, Vector3.Normalize(vLineNormal1 * (1 - sngRatio) + vLineNormal2 * sngRatio))
+        Return (True, linePoint1 + lineDirNormalized * distanceFromLineStart, Vector3.Normalize(lineNormal1 * (1 - ratio) + lineNormal2 * ratio))
     End Function
 
-    Private Shared Function IsPointAbovePlane(vPlanePoint As Vector3, vPlaneNormal As Vector3, vPoint As Vector3) As Boolean
-        Return Vector3.DotProduct(vPlaneNormal, vPoint - vPlanePoint) >= 0
+    Private Shared Function IsPointAbovePlane(planePoint As Vector3, planeNormal As Vector3, point As Vector3) As Boolean
+        Return Vector3.DotProduct(planeNormal, point - planePoint) >= 0
     End Function
 End Class

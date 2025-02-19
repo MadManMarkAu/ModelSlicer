@@ -20,39 +20,39 @@
         End Get
     End Property
 
-    Public Sub New(vMinimum As Vector3, vMaximum As Vector3)
-        Minimum = vMinimum
-        Maximum = vMaximum
+    Public Sub New(min As Vector3, max As Vector3)
+        Minimum = min
+        Maximum = max
     End Sub
 
-    Public Shared Function CombineBounds(ParamArray abbBounds() As BoundingBox) As BoundingBox
-        Dim vMin As Vector3
-        Dim vMax As Vector3
-        Dim blnBoundsSet As Boolean
+    Public Shared Function CombineBounds(ParamArray bounds() As BoundingBox) As BoundingBox
+        Dim min As Vector3
+        Dim max As Vector3
+        Dim boundsSet As Boolean
 
-        For Each bbBounds As BoundingBox In abbBounds
-            If Not blnBoundsSet Then
-                blnBoundsSet = True
-                vMin = bbBounds.Minimum
-                vMax = bbBounds.Maximum
+        For Each box As BoundingBox In bounds
+            If Not boundsSet Then
+                boundsSet = True
+                min = box.Minimum
+                max = box.Maximum
             Else
-                If vMin.X > bbBounds.Minimum.X Then
-                    vMin.X = bbBounds.Minimum.X
+                If min.X > box.Minimum.X Then
+                    min.X = box.Minimum.X
                 End If
-                If vMin.Y > bbBounds.Minimum.Y Then
-                    vMin.Y = bbBounds.Minimum.Y
+                If min.Y > box.Minimum.Y Then
+                    min.Y = box.Minimum.Y
                 End If
-                If vMin.Z > bbBounds.Minimum.Z Then
-                    vMin.Z = bbBounds.Minimum.Z
+                If min.Z > box.Minimum.Z Then
+                    min.Z = box.Minimum.Z
                 End If
-                If vMax.X < bbBounds.Maximum.X Then
-                    vMax.X = bbBounds.Maximum.X
+                If max.X < box.Maximum.X Then
+                    max.X = box.Maximum.X
                 End If
-                If vMax.Y < bbBounds.Maximum.Y Then
-                    vMax.Y = bbBounds.Maximum.Y
+                If max.Y < box.Maximum.Y Then
+                    max.Y = box.Maximum.Y
                 End If
-                If vMax.Z < bbBounds.Maximum.Z Then
-                    vMax.Z = bbBounds.Maximum.Z
+                If max.Z < box.Maximum.Z Then
+                    max.Z = box.Maximum.Z
                 End If
             End If
         Next

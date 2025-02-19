@@ -1,159 +1,159 @@
 ﻿Public Class MesherXYZ
-    Private m_stTree As SpaceTree3
+    Private _ree As SpaceTree3
 
     Public ReadOnly Points() As Vector3
     Public ReadOnly Triangles() As MeshTriangle
     Public ReadOnly Edges() As MeshEdge
     Public ReadOnly DisconnectedEdges() As MeshEdge
 
-    Public Sub New(gtgTriangles As GeometryTriangleGroup)
-        Dim lstVectors As New List(Of Vector3)
-        Dim mtTriangle As MeshTriangle
-        Dim meEdge As MeshEdge
-        Dim lstTempEdges As New List(Of Tuple(Of Integer, Integer))
-        Dim intV1Index As Integer
-        Dim intV2Index As Integer
-        Dim intV3Index As Integer
-        Dim intV12EdgeIndex As Integer
-        Dim intV23EdgeIndex As Integer
-        Dim intV31EdgeIndex As Integer
+    Public Sub New(triGroup As GeometryTriangleGroup)
+        Dim vectors As New List(Of Vector3)
+        Dim meshTriangle As MeshTriangle
+        Dim meshEdge As MeshEdge
+        Dim tempEdges As New List(Of Tuple(Of Integer, Integer))
+        Dim v1Index As Integer
+        Dim v2Index As Integer
+        Dim v3Index As Integer
+        Dim v12EdgeIndex As Integer
+        Dim v23EdgeIndex As Integer
+        Dim v31EdgeIndex As Integer
 
-        Dim lstTriangles As New List(Of MeshTriangle)
-        Dim lstPoints As New List(Of Vector3)
-        Dim lstEdges As New List(Of MeshEdge)
-        Dim lstDisconnectedEdges As New List(Of MeshEdge)
+        Dim triangles As New List(Of MeshTriangle)
+        Dim points As New List(Of Vector3)
+        Dim edges As New List(Of MeshEdge)
+        Dim disconnectedEdges As New List(Of MeshEdge)
 
-        For Each gtTriangle As GeometryTriangle In gtgTriangles.Triangles
-            lstVectors.Add(gtTriangle.V1)
-            lstVectors.Add(gtTriangle.V2)
-            lstVectors.Add(gtTriangle.V3)
+        For Each tri As GeometryTriangle In triGroup.Triangles
+            vectors.Add(tri.V1)
+            vectors.Add(tri.V2)
+            vectors.Add(tri.V3)
         Next
 
-        m_stTree = New SpaceTree3(lstVectors)
+        _ree = New SpaceTree3(vectors)
 
-        For Each stpPoint As SpaceTree3.SpaceTreePoint In m_stTree.GetPoints()
-            lstPoints.Add(stpPoint.ToVector3())
+        For Each point As SpaceTree3.SpaceTreePoint In _ree.GetPoints()
+            points.Add(point.ToVector3())
         Next
 
-        For Each gtTriangle As GeometryTriangle In gtgTriangles.Triangles
-            intV1Index = m_stTree.GetPoint(gtTriangle.V1).Index
-            intV2Index = m_stTree.GetPoint(gtTriangle.V2).Index
-            intV3Index = m_stTree.GetPoint(gtTriangle.V3).Index
+        For Each tri As GeometryTriangle In triGroup.Triangles
+            v1Index = _ree.GetPoint(tri.V1).Index
+            v2Index = _ree.GetPoint(tri.V2).Index
+            v3Index = _ree.GetPoint(tri.V3).Index
 
-            intV12EdgeIndex = GetOrAddEdge(lstTempEdges, intV1Index, intV2Index)
-            intV23EdgeIndex = GetOrAddEdge(lstTempEdges, intV2Index, intV3Index)
-            intV31EdgeIndex = GetOrAddEdge(lstTempEdges, intV3Index, intV1Index)
+            v12EdgeIndex = GetOrAddEdge(tempEdges, v1Index, v2Index)
+            v23EdgeIndex = GetOrAddEdge(tempEdges, v2Index, v3Index)
+            v31EdgeIndex = GetOrAddEdge(tempEdges, v3Index, v1Index)
 
-            lstTriangles.Add(New MeshTriangle(intV1Index, intV2Index, intV3Index, intV12EdgeIndex, intV23EdgeIndex, intV31EdgeIndex, gtTriangle.SurfaceNormal))
+            triangles.Add(New MeshTriangle(v1Index, v2Index, v3Index, v12EdgeIndex, v23EdgeIndex, v31EdgeIndex, tri.SurfaceNormal))
         Next
 
-        Dim alstTriangles(lstTempEdges.Count - 1) As List(Of MeshTriangle)
+        Dim triangleList(tempEdges.Count - 1) As List(Of MeshTriangle)
 
-        For Each mtTriangle In lstTriangles
-            If alstTriangles(mtTriangle.V12EdgeIndex) Is Nothing Then
-                alstTriangles(mtTriangle.V12EdgeIndex) = New List(Of MeshTriangle) From {mtTriangle}
+        For Each meshTriangle In triangles
+            If triangleList(meshTriangle.V12EdgeIndex) Is Nothing Then
+                triangleList(meshTriangle.V12EdgeIndex) = New List(Of MeshTriangle) From {meshTriangle}
             Else
-                alstTriangles(mtTriangle.V12EdgeIndex).Add(mtTriangle)
+                triangleList(meshTriangle.V12EdgeIndex).Add(meshTriangle)
             End If
 
-            If alstTriangles(mtTriangle.V23EdgeIndex) Is Nothing Then
-                alstTriangles(mtTriangle.V23EdgeIndex) = New List(Of MeshTriangle) From {mtTriangle}
+            If triangleList(meshTriangle.V23EdgeIndex) Is Nothing Then
+                triangleList(meshTriangle.V23EdgeIndex) = New List(Of MeshTriangle) From {meshTriangle}
             Else
-                alstTriangles(mtTriangle.V23EdgeIndex).Add(mtTriangle)
+                triangleList(meshTriangle.V23EdgeIndex).Add(meshTriangle)
             End If
 
-            If alstTriangles(mtTriangle.V31EdgeIndex) Is Nothing Then
-                alstTriangles(mtTriangle.V31EdgeIndex) = New List(Of MeshTriangle) From {mtTriangle}
+            If triangleList(meshTriangle.V31EdgeIndex) Is Nothing Then
+                triangleList(meshTriangle.V31EdgeIndex) = New List(Of MeshTriangle) From {meshTriangle}
             Else
-                alstTriangles(mtTriangle.V31EdgeIndex).Add(mtTriangle)
+                triangleList(meshTriangle.V31EdgeIndex).Add(meshTriangle)
             End If
         Next
 
-        For intIndex As Integer = 0 To lstTempEdges.Count - 1
-            lstEdges.Add(New MeshEdge(lstTempEdges(intIndex).Item1, lstTempEdges(intIndex).Item2, alstTriangles(intIndex).ToArray()))
+        For index As Integer = 0 To tempEdges.Count - 1
+            edges.Add(New MeshEdge(tempEdges(index).Item1, tempEdges(index).Item2, triangleList(index).ToArray()))
         Next
 
-        For Each meEdge In lstEdges
-            If meEdge.Triangles.Count <= 1 Then
-                lstDisconnectedEdges.Add(meEdge)
+        For Each meshEdge In edges
+            If meshEdge.Triangles.Count <= 1 Then
+                disconnectedEdges.Add(meshEdge)
             End If
         Next
 
-        Points = lstPoints.ToArray()
-        Triangles = lstTriangles.ToArray()
-        Edges = lstEdges.ToArray()
-        DisconnectedEdges = lstDisconnectedEdges.ToArray()
+        Me.Points = points.ToArray()
+        Me.Triangles = triangles.ToArray()
+        Me.Edges = edges.ToArray()
+        Me.DisconnectedEdges = disconnectedEdges.ToArray()
     End Sub
 
-    Public Function CreateDisconnectedEdgesLineGroup(cColor As Color) As GeometryLineGroup
-        Dim glgGroup As New GeometryLineGroup
+    Public Function CreateDisconnectedEdgesLineGroup(color As Color) As GeometryLineGroup
+        Dim output As New GeometryLineGroup
 
-        glgGroup.EnableLighting = False
+        output.EnableLighting = False
 
         For Each meEdge As MeshEdge In DisconnectedEdges
-            glgGroup.Lines.Add(New GeometryLine(cColor, Points(meEdge.V1Index), Points(meEdge.V2Index)))
+            output.Lines.Add(New GeometryLine(color, Points(meEdge.V1Index), Points(meEdge.V2Index)))
         Next
 
-        glgGroup.UpdateBounds()
+        output.UpdateBounds()
 
-        Return glgGroup
+        Return output
     End Function
 
-    Public Function CreateSilhouette(vEyeDir As Vector3, cColor As Color) As GeometryLineGroup
-        Dim glgGroup As New GeometryLineGroup
-        Dim lstEdges As New List(Of MeshEdge)
-        Dim blnHasBack As Boolean
-        Dim blnHasFront As Boolean
+    Public Function CreateSilhouette(eyeDir As Vector3, color As Color) As GeometryLineGroup
+        Dim output As New GeometryLineGroup
+        Dim edges As New List(Of MeshEdge)
+        Dim hasBack As Boolean
+        Dim hasFront As Boolean
 
-        For Each meEdge As MeshEdge In Edges
-            If meEdge.Triangles.Count <= 1 Then
-                lstEdges.Add(meEdge)
+        For Each edge As MeshEdge In Me.Edges
+            If edge.Triangles.Count <= 1 Then
+                edges.Add(edge)
             Else
-                blnHasBack = False
-                blnHasFront = False
-                For Each mtTriangle As MeshTriangle In meEdge.Triangles
-                    If Vector3.DotProduct(mtTriangle.Normal, vEyeDir) >= 0 Then
-                        blnHasBack = True
+                hasBack = False
+                hasFront = False
+                For Each tri As MeshTriangle In edge.Triangles
+                    If Vector3.DotProduct(tri.Normal, eyeDir) >= 0 Then
+                        hasBack = True
                     Else
-                        blnHasFront = True
+                        hasFront = True
                     End If
 
-                    If blnHasBack AndAlso blnHasFront Then
+                    If hasBack AndAlso hasFront Then
                         Exit For
                     End If
                 Next
 
-                If blnHasBack AndAlso blnHasFront Then
-                    lstEdges.Add(meEdge)
+                If hasBack AndAlso hasFront Then
+                    edges.Add(edge)
                 End If
             End If
         Next
 
-        glgGroup.EnableLighting = False
+        output.EnableLighting = False
 
-        For Each meEdge As MeshEdge In lstEdges
-            glgGroup.Lines.Add(New GeometryLine(cColor, Points(meEdge.V1Index), Points(meEdge.V2Index)))
+        For Each edge As MeshEdge In edges
+            output.Lines.Add(New GeometryLine(color, Points(edge.V1Index), Points(edge.V2Index)))
         Next
 
-        glgGroup.UpdateBounds()
+        output.UpdateBounds()
 
-        Return glgGroup
+        Return output
     End Function
 
-    Private Function GetOrAddEdge(lstEdges As List(Of Tuple(Of Integer, Integer)), intV1Index As Integer, intV2Index As Integer) As Integer
-        Dim intIndex As Integer
+    Private Function GetOrAddEdge(edges As List(Of Tuple(Of Integer, Integer)), v1Index As Integer, v2Index As Integer) As Integer
+        Dim index As Integer
 
-        For Each meEdge As Tuple(Of Integer, Integer) In lstEdges
-            If (meEdge.Item1 = intV1Index AndAlso meEdge.Item2 = intV2Index) OrElse (meEdge.Item1 = intV2Index AndAlso meEdge.Item2 = intV1Index) Then
-                Return intIndex
+        For Each edge As Tuple(Of Integer, Integer) In edges
+            If (edge.Item1 = v1Index AndAlso edge.Item2 = v2Index) OrElse (edge.Item1 = v2Index AndAlso edge.Item2 = v1Index) Then
+                Return index
                 Exit For
             End If
-            intIndex += 1
+            index += 1
         Next
 
-        lstEdges.Add(New Tuple(Of Integer, Integer)(intV1Index, intV2Index))
+        edges.Add(New Tuple(Of Integer, Integer)(v1Index, v2Index))
 
-        Return intIndex
+        Return index
     End Function
 
     Public Structure MeshTriangle
@@ -167,16 +167,16 @@
 
         Public ReadOnly Normal As Vector3
 
-        Public Sub New(intV1Index As Integer, intV2Index As Integer, intV3Index As Integer, intV12EdgeIndex As Integer, intV23EdgeIndex As Integer, intV31EdgeIndex As Integer, vNormal As Vector3)
-            V1Index = intV1Index
-            V2Index = intV2Index
-            V3Index = intV3Index
+        Public Sub New(v1IndexValue As Integer, v2IndexValue As Integer, v3IndexValue As Integer, v12EdgeIndexValue As Integer, v23EdgeIndexValue As Integer, v31EdgeIndexValue As Integer, normalValue As Vector3)
+            V1Index = v1IndexValue
+            V2Index = v2IndexValue
+            V3Index = v3IndexValue
 
-            V12EdgeIndex = intV12EdgeIndex
-            V23EdgeIndex = intV23EdgeIndex
-            V31EdgeIndex = intV31EdgeIndex
+            V12EdgeIndex = v12EdgeIndexValue
+            V23EdgeIndex = v23EdgeIndexValue
+            V31EdgeIndex = v31EdgeIndexValue
 
-            Normal = vNormal
+            Normal = normalValue
         End Sub
     End Structure
 
@@ -186,11 +186,11 @@
 
         Public ReadOnly Triangles() As MeshTriangle
 
-        Public Sub New(intV1Index As Integer, intV2Index As Integer, atTriangles() As MeshTriangle)
-            V1Index = intV1Index
-            V2Index = intV2Index
+        Public Sub New(v1IndexValue As Integer, v2IndexValue As Integer, trianglesValue() As MeshTriangle)
+            V1Index = v1IndexValue
+            V2Index = v2IndexValue
 
-            Triangles = atTriangles
+            Triangles = trianglesValue
         End Sub
     End Structure
 End Class

@@ -1,32 +1,32 @@
 ﻿Public Class SpaceTree3
     Private Const MAX_POINT_COUNT As Integer = 8
 
-    Private m_eRoot As Entry
+    Private _root As Entry
 
-    Public Sub New(lstVectors As List(Of Vector3))
-        If lstVectors.Count <= MAX_POINT_COUNT Then
-            m_eRoot = New PointList(lstVectors, 0)
+    Public Sub New(vectors As List(Of Vector3))
+        If vectors.Count <= MAX_POINT_COUNT Then
+            _root = New PointList(vectors, 0)
         Else
-            m_eRoot = New BinarySpace(lstVectors, 0, 0)
+            _root = New BinarySpace(vectors, 0, 0)
         End If
     End Sub
 
-    Public Function GetPoint(vVector As Vector3) As SpaceTreePoint
-        Return m_eRoot.GetPoint(vVector)
+    Public Function GetPoint(vector As Vector3) As SpaceTreePoint
+        Return _root.GetPoint(vector)
     End Function
 
     Public Function GetPoints() As SpaceTreePoint()
-        Return m_eRoot.GetPoints()
+        Return _root.GetPoints()
     End Function
 
-    Private Shared Function CompareFloat(sngValue1 As Single, sngValue2 As Single) As Integer
-        Return sngValue1.CompareTo(sngValue2)
+    Private Shared Function CompareFloat(value1 As Single, value2 As Single) As Integer
+        Return value1.CompareTo(value2)
 
-        Dim sngTau As Single = Math.Max(Math.Abs(sngValue1), Math.Abs(sngValue2)) * 0.00000001
+        Dim tau As Single = Math.Max(Math.Abs(value1), Math.Abs(value2)) * 0.00000001
 
-        If sngValue1 - sngValue2 > sngTau Then
+        If value1 - value2 > tau Then
             Return -1
-        ElseIf sngValue1 - sngValue2 < -sngTau Then
+        ElseIf value1 - value2 < -tau Then
             Return 1
         Else
             Return 0
@@ -34,120 +34,120 @@
     End Function
 
     Private MustInherit Class Entry
-        Public MustOverride Function GetPoint(vVector As Vector3) As SpaceTreePoint
+        Public MustOverride Function GetPoint(vector As Vector3) As SpaceTreePoint
         Public MustOverride Function GetPoints() As SpaceTreePoint()
     End Class
 
     Private Class BinarySpace
         Inherits Entry
 
-        Private m_intDirection As Integer
-        Private m_sngSplit As Single
-        Private m_eLower As Entry
-        Private m_eEqual As Entry
-        Private m_eHigher As Entry
+        Private _direction As Integer
+        Private _split As Single
+        Private _lower As Entry
+        Private _equal As Entry
+        Private _higher As Entry
 
-        Public Sub New(lstVectors As List(Of Vector3), intDirection As Integer, ByRef intIndex As Integer)
-            Dim lstLower As New List(Of Vector3)
-            Dim lstEqual As New List(Of Vector3)
-            Dim lstHigher As New List(Of Vector3)
-            Dim sngValue As Single
+        Public Sub New(vectors As List(Of Vector3), direction As Integer, ByRef index As Integer)
+            Dim lower As New List(Of Vector3)
+            Dim equal As New List(Of Vector3)
+            Dim higher As New List(Of Vector3)
+            Dim value As Single
 
-            m_intDirection = intDirection
+            _direction = direction
 
             ' Find the center
-            For Each vPoint As Vector3 In lstVectors
-                m_sngSplit += GetValue(vPoint)
+            For Each point As Vector3 In vectors
+                _split += GetValue(point)
             Next
-            m_sngSplit /= lstVectors.Count
+            _split /= vectors.Count
 
             ' Divvy up the points
-            For Each vVector As Vector3 In lstVectors
-                sngValue = GetValue(vVector)
+            For Each vector As Vector3 In vectors
+                value = GetValue(vector)
 
-                Select Case CompareFloat(sngValue, m_sngSplit)
+                Select Case CompareFloat(value, _split)
                     Case -1
-                        lstLower.Add(vVector)
+                        lower.Add(vector)
 
                     Case 0
-                        lstEqual.Add(vVector)
+                        equal.Add(vector)
 
                     Case 1
-                        lstHigher.Add(vVector)
+                        higher.Add(vector)
 
                 End Select
             Next
 
-            If lstLower.Count = lstVectors.Count OrElse lstHigher.Count = lstVectors.Count Then
-                lstEqual.AddRange(lstLower)
-                lstEqual.AddRange(lstHigher)
-                lstLower.Clear()
-                lstHigher.Clear()
+            If lower.Count = vectors.Count OrElse higher.Count = vectors.Count Then
+                equal.AddRange(lower)
+                equal.AddRange(higher)
+                lower.Clear()
+                higher.Clear()
             End If
 
             ' Create the objects
-            If lstLower.Count <= MAX_POINT_COUNT Then
-                m_eLower = New PointList(lstLower, intIndex)
+            If lower.Count <= MAX_POINT_COUNT Then
+                _lower = New PointList(lower, index)
             Else
-                m_eLower = New BinarySpace(lstLower, (intDirection + 1) Mod 3, intIndex)
+                _lower = New BinarySpace(lower, (direction + 1) Mod 3, index)
             End If
 
-            m_eEqual = New PointList(lstEqual, intIndex)
+            _equal = New PointList(equal, index)
 
-            If lstHigher.Count <= MAX_POINT_COUNT Then
-                m_eHigher = New PointList(lstHigher, intIndex)
+            If higher.Count <= MAX_POINT_COUNT Then
+                _higher = New PointList(higher, index)
             Else
-                m_eHigher = New BinarySpace(lstHigher, (intDirection + 1) Mod 3, intIndex)
+                _higher = New BinarySpace(higher, (direction + 1) Mod 3, index)
             End If
         End Sub
 
-        Public Overrides Function GetPoint(vVector As Vector3) As SpaceTreePoint
-            Dim sngValue As Single = GetValue(vVector)
-            Dim stpOutput As SpaceTreePoint = Nothing
+        Public Overrides Function GetPoint(vector As Vector3) As SpaceTreePoint
+            Dim value As Single = GetValue(vector)
+            Dim output As SpaceTreePoint = Nothing
 
-            Select Case CompareFloat(sngValue, m_sngSplit)
+            Select Case CompareFloat(value, _split)
                 Case -1
-                    stpOutput = m_eLower.GetPoint(vVector)
+                    output = _lower.GetPoint(vector)
 
-                    If stpOutput Is Nothing Then
-                        stpOutput = m_eEqual.GetPoint(vVector)
+                    If output Is Nothing Then
+                        output = _equal.GetPoint(vector)
                     End If
 
                 Case 0
-                    stpOutput = m_eEqual.GetPoint(vVector)
+                    output = _equal.GetPoint(vector)
 
                 Case 1
-                    stpOutput = m_eHigher.GetPoint(vVector)
+                    output = _higher.GetPoint(vector)
 
-                    If stpOutput Is Nothing Then
-                        stpOutput = m_eEqual.GetPoint(vVector)
+                    If output Is Nothing Then
+                        output = _equal.GetPoint(vector)
                     End If
 
             End Select
 
-            Return stpOutput
+            Return output
         End Function
 
         Public Overrides Function GetPoints() As SpaceTreePoint()
-            Dim lstOutput As New List(Of SpaceTreePoint)
+            Dim output As New List(Of SpaceTreePoint)
 
-            lstOutput.AddRange(m_eLower.GetPoints())
-            lstOutput.AddRange(m_eEqual.GetPoints())
-            lstOutput.AddRange(m_eHigher.GetPoints())
+            output.AddRange(_lower.GetPoints())
+            output.AddRange(_equal.GetPoints())
+            output.AddRange(_higher.GetPoints())
 
-            Return lstOutput.ToArray()
+            Return output.ToArray()
         End Function
 
-        Private Function GetValue(vVector As Vector3) As Single
-            Select Case m_intDirection
+        Private Function GetValue(vector As Vector3) As Single
+            Select Case _direction
                 Case 0
-                    Return vVector.X
+                    Return vector.X
 
                 Case 1
-                    Return vVector.Y
+                    Return vector.Y
 
                 Case 2
-                    Return vVector.Z
+                    Return vector.Z
 
                 Case Else
                     Return 0
@@ -162,29 +162,29 @@
 
         Public ReadOnly Points As New List(Of SpaceTreePoint)
 
-        Public Sub New(lstVectors As List(Of Vector3), ByRef intIndex As Integer)
-            Dim blnFound As Boolean
+        Public Sub New(vectors As List(Of Vector3), ByRef index As Integer)
+            Dim found As Boolean
 
-            For Each vVector As Vector3 In lstVectors
-                blnFound = False
-                For Each stpPoint As SpaceTreePoint In Points
-                    If CompareFloat(stpPoint.X, vVector.X) = 0 AndAlso CompareFloat(stpPoint.Y, vVector.Y) = 0 AndAlso CompareFloat(stpPoint.Z, vVector.Z) = 0 Then
-                        blnFound = True
+            For Each vector As Vector3 In vectors
+                found = False
+                For Each point As SpaceTreePoint In Points
+                    If CompareFloat(point.X, vector.X) = 0 AndAlso CompareFloat(point.Y, vector.Y) = 0 AndAlso CompareFloat(point.Z, vector.Z) = 0 Then
+                        found = True
                         Exit For
                     End If
                 Next
 
-                If Not blnFound Then
-                    Points.Add(New SpaceTreePoint(vVector, intIndex))
-                    intIndex += 1
+                If Not found Then
+                    Points.Add(New SpaceTreePoint(vector, index))
+                    index += 1
                 End If
             Next
         End Sub
 
-        Public Overrides Function GetPoint(vVector As Vector3) As SpaceTreePoint
-            For Each stpPoint As SpaceTreePoint In Points
-                If CompareFloat(stpPoint.X, vVector.X) = 0 AndAlso CompareFloat(stpPoint.Y, vVector.Y) = 0 AndAlso CompareFloat(stpPoint.Z, vVector.Z) = 0 Then
-                    Return stpPoint
+        Public Overrides Function GetPoint(vector As Vector3) As SpaceTreePoint
+            For Each point As SpaceTreePoint In Points
+                If CompareFloat(point.X, vector.X) = 0 AndAlso CompareFloat(point.Y, vector.Y) = 0 AndAlso CompareFloat(point.Z, vector.Z) = 0 Then
+                    Return point
                 End If
             Next
 
@@ -202,11 +202,11 @@
         Public ReadOnly Z As Single
         Public ReadOnly Index As Integer
 
-        Public Sub New(vVector As Vector3, intIndex As Integer)
-            X = vVector.X
-            Y = vVector.Y
-            Z = vVector.Z
-            Index = intIndex
+        Public Sub New(vector As Vector3, index As Integer)
+            X = vector.X
+            Y = vector.Y
+            Z = vector.Z
+            index = index
         End Sub
 
         Public Function ToVector3() As Vector3

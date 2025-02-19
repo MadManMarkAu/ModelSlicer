@@ -1,5 +1,5 @@
 ﻿Public Structure Layer
-    Private m_bbBounds As BoundingBox
+    Private _bounds As BoundingBox
 
     Public ReadOnly Property TopOutline As GeometryLineGroup
     Public ReadOnly Property BottomOutline As GeometryLineGroup
@@ -7,15 +7,15 @@
 
     Public ReadOnly Property Bounds As BoundingBox
         Get
-            Return m_bbBounds
+            Return _bounds
         End Get
     End Property
 
-    Public Sub New(glgTopOutline As GeometryLineGroup, glgBottomOutline As GeometryLineGroup, gtgContents As GeometryTriangleGroup)
-        TopOutline = glgTopOutline
-        BottomOutline = glgBottomOutline
-        Contents = gtgContents
+    Public Sub New(topOutlineValue As GeometryLineGroup, bottomOutlineValue As GeometryLineGroup, contentsValue As GeometryTriangleGroup)
+        topOutlineValue = topOutlineValue
+        BottomOutline = bottomOutlineValue
+        Contents = contentsValue
 
-        m_bbBounds = gtgContents.Bounds
+        _bounds = contentsValue.Bounds
     End Sub
 End Structure

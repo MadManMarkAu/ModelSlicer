@@ -8,90 +8,93 @@
     End Sub
 
     Public Sub UpdateBounds()
-        Dim vMin As Vector3
-        Dim vMax As Vector3
-        Dim blnBoundsInit As Boolean
+        Dim min As Vector3
+        Dim max As Vector3
+        Dim isBoundsInit As Boolean
 
-        For Each gtTriangle As GeometryTriangle In Triangles
-            If Not blnBoundsInit Then
-                vMin = gtTriangle.Min
-                vMax = gtTriangle.Max
-                blnBoundsInit = True
+        For Each tri As GeometryTriangle In Triangles
+            If Not isBoundsInit Then
+                min = tri.Min
+                max = tri.Max
+                isBoundsInit = True
             Else
-                vMin = Min(vMin, gtTriangle.Min)
-                vMax = Max(vMax, gtTriangle.Max)
+                min = Me.Min(min, tri.Min)
+                max = Me.Max(max, tri.Max)
             End If
         Next
 
-        m_bbBounds = New BoundingBox(vMin, vMax)
+        _bounds = New BoundingBox(min, max)
     End Sub
 
-    Private Function Min(vVec1 As Vector3, vVec2 As Vector3) As Vector3
+    Private Function Min(vec1 As Vector3, vec2 As Vector3) As Vector3
         Return New Vector3(
-            Math.Min(vVec1.X, vVec2.X),
-            Math.Min(vVec1.Y, vVec2.Y),
-            Math.Min(vVec1.Z, vVec2.Z)
+            Math.Min(vec1.X, vec2.X),
+            Math.Min(vec1.Y, vec2.Y),
+            Math.Min(vec1.Z, vec2.Z)
         )
     End Function
 
-    Private Function Max(vVec1 As Vector3, vVec2 As Vector3) As Vector3
+    Private Function Max(vec1 As Vector3, vec2 As Vector3) As Vector3
         Return New Vector3(
-            Math.Max(vVec1.X, vVec2.X),
-            Math.Max(vVec1.Y, vVec2.Y),
-            Math.Max(vVec1.Z, vVec2.Z)
+            Math.Max(vec1.X, vec2.X),
+            Math.Max(vec1.Y, vec2.Y),
+            Math.Max(vec1.Z, vec2.Z)
         )
     End Function
 
-    Public Function CloneWithColor(cColor As Color) As GeometryTriangleGroup
-        Dim gtgOutput As New GeometryTriangleGroup
+    Public Function CloneWithColor(color As Color) As GeometryTriangleGroup
+        Dim output As New GeometryTriangleGroup
 
-        gtgOutput.Name = Name
+        output.Name = Name
 
-        For Each gtTriangle As GeometryTriangle In Triangles
-            gtgOutput.Triangles.Add(New GeometryTriangle(cColor, gtTriangle.V1, gtTriangle.V2, gtTriangle.V3, gtTriangle.V1Normal, gtTriangle.V2Normal, gtTriangle.V3Normal, gtTriangle.SurfaceNormal))
+        For Each tri As GeometryTriangle In Triangles
+            output.Triangles.Add(New GeometryTriangle(color, tri.V1, tri.V2, tri.V3, tri.V1Normal, tri.V2Normal, tri.V3Normal, tri.SurfaceNormal))
         Next
 
-        gtgOutput.UpdateBounds()
+        output.UpdateBounds()
 
-        Return gtgOutput
+        Return output
     End Function
 
     Public Sub Scale(scale As Single)
-        For ii As Integer = 0 To (Triangles.Count - 1)
-            Dim gtTriangle As GeometryTriangle = Triangles(ii)
-            Triangles(ii) = New GeometryTriangle(gtTriangle.Color, gtTriangle.V1 * scale, gtTriangle.V2 * scale, gtTriangle.V3 * scale, gtTriangle.V1Normal, gtTriangle.V2Normal, gtTriangle.V3Normal, gtTriangle.SurfaceNormal)
-        Next ii
+        Dim tri As GeometryTriangle
+
+        For i As Integer = 0 To (Triangles.Count - 1)
+            tri = Triangles(i)
+            Triangles(i) = New GeometryTriangle(tri.Color, tri.V1 * scale, tri.V2 * scale, tri.V3 * scale, tri.V1Normal, tri.V2Normal, tri.V3Normal, tri.SurfaceNormal)
+        Next i
         UpdateBounds()
     End Sub
 
     Public Sub SwapUpAxis()
-        For ii As Integer = 0 To (Triangles.Count - 1)
-            Dim gtTriangle As GeometryTriangle = Triangles(ii)
-            Triangles(ii) = New GeometryTriangle(gtTriangle.Color,
-                                                 gtTriangle.V1.SwapUpAxis(),
-                                                 gtTriangle.V2.SwapUpAxis(),
-                                                 gtTriangle.V3.SwapUpAxis(),
-                                                 gtTriangle.V1Normal.SwapUpAxis(),
-                                                 gtTriangle.V2Normal.SwapUpAxis(),
-                                                 gtTriangle.V3Normal.SwapUpAxis(),
-                                                 gtTriangle.SurfaceNormal.SwapUpAxis())
-        Next ii
+        Dim tri As GeometryTriangle
+
+        For i As Integer = 0 To (Triangles.Count - 1)
+            tri = Triangles(i)
+            Triangles(i) = New GeometryTriangle(tri.Color,
+                                                 tri.V1.SwapUpAxis(),
+                                                 tri.V2.SwapUpAxis(),
+                                                 tri.V3.SwapUpAxis(),
+                                                 tri.V1Normal.SwapUpAxis(),
+                                                 tri.V2Normal.SwapUpAxis(),
+                                                 tri.V3Normal.SwapUpAxis(),
+                                                 tri.SurfaceNormal.SwapUpAxis())
+        Next i
         UpdateBounds()
     End Sub
 
-    Public Function ToLineGroup(cColor As Color) As GeometryLineGroup
-        Dim glgOutput As New GeometryLineGroup
-        Dim gtTriangle As GeometryTriangle
+    Public Function ToLineGroup(color As Color) As GeometryLineGroup
+        Dim output As New GeometryLineGroup
 
-        For Each gtTriangle In Triangles
-            glgOutput.Lines.Add(New GeometryLine(cColor, gtTriangle.V1, gtTriangle.V2, gtTriangle.V1Normal, gtTriangle.V2Normal, gtTriangle.SurfaceNormal))
-            glgOutput.Lines.Add(New GeometryLine(cColor, gtTriangle.V2, gtTriangle.V3, gtTriangle.V2Normal, gtTriangle.V3Normal, gtTriangle.SurfaceNormal))
-            glgOutput.Lines.Add(New GeometryLine(cColor, gtTriangle.V3, gtTriangle.V1, gtTriangle.V3Normal, gtTriangle.V1Normal, gtTriangle.SurfaceNormal))
+        For Each tri As GeometryTriangle In Triangles
+            output.Lines.Add(New GeometryLine(color, tri.V1, tri.V2, tri.V1Normal, tri.V2Normal, tri.SurfaceNormal))
+            output.Lines.Add(New GeometryLine(color, tri.V2, tri.V3, tri.V2Normal, tri.V3Normal, tri.SurfaceNormal))
+            output.Lines.Add(New GeometryLine(color, tri.V3, tri.V1, tri.V3Normal, tri.V1Normal, tri.SurfaceNormal))
         Next
 
-        glgOutput.UpdateBounds()
+        output.UpdateBounds()
 
-        Return glgOutput
+        Return output
     End Function
 
     Public Overrides Function ToString() As String

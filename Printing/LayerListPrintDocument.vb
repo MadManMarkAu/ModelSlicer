@@ -3,27 +3,25 @@
 Public Class LayerListPrintDocument
     Inherits PrintDocument
 
-    Private m_lstLayers As New List(Of Layer)
-    Private m_intPageIndex As Integer
-    Private m_intLayerIndex As Integer
-    Private m_sngViewOffsetX As Single
-    Private m_sngViewOffsetY As Single
-    Private m_intViewIndexX As Single
-    Private m_intViewIndexY As Single
+    Private _layers As New List(Of Layer)
+    Private _pageIndex As Integer
+    Private _layerIndex As Integer
+    Private _viewOffsetX As Single
+    Private _viewOffsetY As Single
+    Private _viewIndexX As Single
+    Private _viewIndexY As Single
 
     Public Sub New(eLayers As IEnumerable(Of Layer))
-        m_lstLayers.AddRange(eLayers)
+        _layers.AddRange(eLayers)
     End Sub
 
     Protected Overrides Sub OnBeginPrint(e As PrintEventArgs)
-        Dim lLayer As Layer = m_lstLayers(0)
-
-        m_intPageIndex = 0
-        m_intLayerIndex = 0
-        m_sngViewOffsetX = 0
-        m_sngViewOffsetX = 0
-        m_intViewIndexX = 0
-        m_intViewIndexY = 0
+        _pageIndex = 0
+        _layerIndex = 0
+        _viewOffsetX = 0
+        _viewOffsetX = 0
+        _viewIndexX = 0
+        _viewIndexY = 0
 
         MyBase.OnBeginPrint(e)
     End Sub
@@ -31,96 +29,96 @@ Public Class LayerListPrintDocument
     Protected Overrides Sub OnPrintPage(e As PrintPageEventArgs)
         MyBase.OnPrintPage(e)
 
-        Dim sViewSize As New SizeF(TranslateUnitBack(e.MarginBounds.Width), TranslateUnitBack(e.MarginBounds.Height))
-        Dim rPrintArea As Rectangle = e.MarginBounds
-        Dim lLayer As Layer = m_lstLayers(m_intLayerIndex)
+        Dim viewSize As New SizeF(TranslateUnitBack(e.MarginBounds.Width), TranslateUnitBack(e.MarginBounds.Height))
+        Dim printArea As Rectangle = e.MarginBounds
+        Dim layer As Layer = _layers(_layerIndex)
 
-        sViewSize.Height -= PrintSection(e.Graphics, lLayer, e.MarginBounds, New PointF(m_sngViewOffsetX, m_sngViewOffsetY))
+        viewSize.Height -= PrintSection(e.Graphics, layer, e.MarginBounds, New PointF(_viewOffsetX, _viewOffsetY))
 
         e.HasMorePages = True
 
-        m_sngViewOffsetX += sViewSize.Width
-        m_intViewIndexX += 1
-        If m_sngViewOffsetX > lLayer.Bounds.Width Then
-            m_sngViewOffsetX = 0
-            m_intViewIndexX = 0
-            m_sngViewOffsetY += sViewSize.Height
-            m_intViewIndexY += 1
+        _viewOffsetX += viewSize.Width
+        _viewIndexX += 1
+        If _viewOffsetX > layer.Bounds.Width Then
+            _viewOffsetX = 0
+            _viewIndexX = 0
+            _viewOffsetY += viewSize.Height
+            _viewIndexY += 1
 
-            If m_sngViewOffsetY > lLayer.Bounds.Depth Then
-                m_sngViewOffsetY = 0
-                m_intViewIndexY = 0
-                m_intLayerIndex += 1
+            If _viewOffsetY > layer.Bounds.Depth Then
+                _viewOffsetY = 0
+                _viewIndexY = 0
+                _layerIndex += 1
 
-                If m_intLayerIndex >= m_lstLayers.Count Then
+                If _layerIndex >= _layers.Count Then
                     e.HasMorePages = False
                 End If
             End If
         End If
 
-        m_intPageIndex += 1
+        _pageIndex += 1
     End Sub
 
-    Private Function PrintSection(gCanvas As Graphics, lLayer As Layer, rPrintingBounds As RectangleF, pTopLeft As PointF) As Single
-        Dim strHeader As String
-        Dim sngYOffset As Single
-        Dim sngOriginOffsetX As Single = lLayer.Bounds.Minimum.X + pTopLeft.X - TranslateUnitBack(rPrintingBounds.X)
-        Dim sngOriginOffsetY As Single = lLayer.Bounds.Minimum.Z + pTopLeft.Y - TranslateUnitBack(rPrintingBounds.Y)
+    Private Function PrintSection(canvas As Graphics, layer As Layer, printingBounds As RectangleF, topLeft As PointF) As Single
+        Dim header As String
+        Dim yOffset As Single
+        Dim originOffsetX As Single = layer.Bounds.Minimum.X + topLeft.X - TranslateUnitBack(printingBounds.X)
+        Dim originOffsetY As Single = layer.Bounds.Minimum.Z + topLeft.Y - TranslateUnitBack(printingBounds.Y)
 
-        strHeader = "Page:" & m_intPageIndex & ", Layer:" & m_intLayerIndex & ", X:" & m_intViewIndexX & ", Y:" & m_intViewIndexY
+        header = "Page:" & _pageIndex & ", Layer:" & _layerIndex & ", X:" & _viewIndexX & ", Y:" & _viewIndexY
 
         ' Draw header text
-        Using fFont As New Font(FontFamily.GenericSansSerif, 12, FontStyle.Bold)
+        Using font As New Font(FontFamily.GenericSansSerif, 12, FontStyle.Bold)
             Using bBrush As New SolidBrush(Color.Black)
                 Using sfFormat As New StringFormat(StringFormatFlags.NoWrap)
-                    sngYOffset = gCanvas.MeasureString(strHeader, fFont, New PointF(0, 0), sfFormat).Height
-                    gCanvas.DrawString(strHeader, fFont, bBrush, New PointF(rPrintingBounds.X, rPrintingBounds.Y), sfFormat)
+                    yOffset = canvas.MeasureString(header, font, New PointF(0, 0), sfFormat).Height
+                    canvas.DrawString(header, font, bBrush, New PointF(printingBounds.X, printingBounds.Y), sfFormat)
                 End Using
             End Using
         End Using
 
         ' Draw content
-        For Each gtTriangle As GeometryTriangle In lLayer.Contents.Triangles
-            Using bBrush As New SolidBrush(gtTriangle.Color)
-                gCanvas.FillPolygon(bBrush, New PointF() {
-                    New PointF(TranslateUnit(gtTriangle.V1.X - sngOriginOffsetX), TranslateUnit(gtTriangle.V1.Z - sngOriginOffsetY) + sngYOffset),
-                    New PointF(TranslateUnit(gtTriangle.V2.X - sngOriginOffsetX), TranslateUnit(gtTriangle.V2.Z - sngOriginOffsetY) + sngYOffset),
-                    New PointF(TranslateUnit(gtTriangle.V3.X - sngOriginOffsetX), TranslateUnit(gtTriangle.V3.Z - sngOriginOffsetY) + sngYOffset)
+        For Each tri As GeometryTriangle In layer.Contents.Triangles
+            Using brush As New SolidBrush(tri.Color)
+                canvas.FillPolygon(brush, New PointF() {
+                    New PointF(TranslateUnit(tri.V1.X - originOffsetX), TranslateUnit(tri.V1.Z - originOffsetY) + yOffset),
+                    New PointF(TranslateUnit(tri.V2.X - originOffsetX), TranslateUnit(tri.V2.Z - originOffsetY) + yOffset),
+                    New PointF(TranslateUnit(tri.V3.X - originOffsetX), TranslateUnit(tri.V3.Z - originOffsetY) + yOffset)
                 })
             End Using
         Next
 
         ' Draw top
-        For Each glLine As GeometryLine In lLayer.TopOutline.Lines
-            Using pPen As New Pen(glLine.Color)
-                gCanvas.DrawLine(pPen,
-                                 TranslateUnit(glLine.V1.X - sngOriginOffsetX), TranslateUnit(glLine.V1.Z - sngOriginOffsetY) + sngYOffset,
-                                 TranslateUnit(glLine.V2.X - sngOriginOffsetX), TranslateUnit(glLine.V2.Z - sngOriginOffsetY) + sngYOffset)
+        For Each line As GeometryLine In layer.TopOutline.Lines
+            Using pen As New Pen(line.Color)
+                canvas.DrawLine(pen,
+                                 TranslateUnit(line.V1.X - originOffsetX), TranslateUnit(line.V1.Z - originOffsetY) + yOffset,
+                                 TranslateUnit(line.V2.X - originOffsetX), TranslateUnit(line.V2.Z - originOffsetY) + yOffset)
             End Using
         Next
 
         ' Draw bottom
-        For Each glLine As GeometryLine In lLayer.BottomOutline.Lines
-            Using pPen As New Pen(glLine.Color)
-                gCanvas.DrawLine(pPen,
-                                 TranslateUnit(glLine.V1.X - sngOriginOffsetX), TranslateUnit(glLine.V1.Z - sngOriginOffsetY) + sngYOffset,
-                                 TranslateUnit(glLine.V2.X - sngOriginOffsetX), TranslateUnit(glLine.V2.Z - sngOriginOffsetY) + sngYOffset)
+        For Each line As GeometryLine In layer.BottomOutline.Lines
+            Using pen As New Pen(line.Color)
+                canvas.DrawLine(pen,
+                                 TranslateUnit(line.V1.X - originOffsetX), TranslateUnit(line.V1.Z - originOffsetY) + yOffset,
+                                 TranslateUnit(line.V2.X - originOffsetX), TranslateUnit(line.V2.Z - originOffsetY) + yOffset)
             End Using
         Next
 
         ' Draw page bounds
-        Using pPen As New Pen(Color.Black)
-            gCanvas.DrawRectangle(pPen, rPrintingBounds.X, rPrintingBounds.Y + sngYOffset, rPrintingBounds.Width - 1, rPrintingBounds.Height - 1 - sngYOffset)
+        Using pen As New Pen(Color.Black)
+            canvas.DrawRectangle(pen, printingBounds.X, printingBounds.Y + yOffset, printingBounds.Width - 1, printingBounds.Height - 1 - yOffset)
         End Using
 
-        Return TranslateUnitBack(sngYOffset)
+        Return TranslateUnitBack(yOffset)
     End Function
 
-    Private Function TranslateUnit(sngInput As Single) As Single
-        Return sngInput * 3937.01
+    Private Function TranslateUnit(input As Single) As Single
+        Return input * 3937.01
     End Function
 
-    Private Function TranslateUnitBack(sngInput As Single) As Single
-        Return sngInput / 3937.01
+    Private Function TranslateUnitBack(input As Single) As Single
+        Return input / 3937.01
     End Function
 End Class

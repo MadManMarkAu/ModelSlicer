@@ -6,25 +6,25 @@ Public Class ModelDisplay
 
     Public Event MouseDrag(sender As Object, e As MouseDragEventArgs)
 
-    Private m_aggGeometryGroups() As GeometryGroup = New GeometryGroup() {}
+    Private _geometryGroups() As GeometryGroup = New GeometryGroup() {}
 
-    Private m_mModelMatrix As Matrix = Matrix.Identity()
-    Private m_qViewQuat As Quaternion = Quaternion.Identity()
+    Private _modelMatrix As Matrix = Matrix.Identity()
+    Private _viewQuat As Quaternion = Quaternion.Identity()
 
-    Private m_blnDragging As Boolean
-    Private m_intLastMouseX As Integer
-    Private m_intLastMouseY As Integer
+    Private _dragging As Boolean
+    Private _lastMouseX As Integer
+    Private _lastMouseY As Integer
 
-    Private m_rRenderer As Renderer
+    Private _renderer As Renderer
 
     <Browsable(False)>
     <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
     Public Property ModelMatrix As Matrix
         Get
-            Return m_mModelMatrix
+            Return _modelMatrix
         End Get
         Set(value As Matrix)
-            m_mModelMatrix = value
+            _modelMatrix = value
 
             Invalidate()
         End Set
@@ -34,10 +34,10 @@ Public Class ModelDisplay
     <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
     Public Property ViewQuaternion As Quaternion
         Get
-            Return m_qViewQuat
+            Return _viewQuat
         End Get
         Set(value As Quaternion)
-            m_qViewQuat = value
+            _viewQuat = value
 
             Invalidate()
         End Set
@@ -51,14 +51,14 @@ Public Class ModelDisplay
 
     Protected Overrides ReadOnly Property CreateParams As CreateParams
         Get
-            Dim cpParams As CreateParams
+            Dim params As CreateParams
 
-            cpParams = MyBase.CreateParams
-            cpParams.ExStyle = cpParams.ExStyle Or &H10000I
-            cpParams.ExStyle = cpParams.ExStyle And (Not &H200I)
-            cpParams.Style = cpParams.Style Or &H800000I
+            params = MyBase.CreateParams
+            params.ExStyle = params.ExStyle Or &H10000I
+            params.ExStyle = params.ExStyle And (Not &H200I)
+            params.Style = params.Style Or &H800000I
 
-            Return cpParams
+            Return params
         End Get
     End Property
 
@@ -72,9 +72,9 @@ Public Class ModelDisplay
     End Sub
 
     Protected Overrides Sub DestroyHandle()
-        If m_rRenderer IsNot Nothing Then
-            m_rRenderer.Dispose()
-            m_rRenderer = Nothing
+        If _renderer IsNot Nothing Then
+            _renderer.Dispose()
+            _renderer = Nothing
         End If
 
         MyBase.DestroyHandle()
@@ -82,12 +82,12 @@ Public Class ModelDisplay
 
     Protected Overrides Sub OnResize(e As EventArgs)
         If ClientSize.Width > 0 AndAlso ClientSize.Height > 0 Then
-            If m_rRenderer Is Nothing Then
+            If _renderer Is Nothing Then
                 If Not DesignMode Then
-                    m_rRenderer = New Renderer(Handle, ClientSize.Width, ClientSize.Height)
+                    _renderer = New Renderer(Handle, ClientSize.Width, ClientSize.Height)
                 End If
             Else
-                m_rRenderer.Resize(ClientSize.Width, ClientSize.Height)
+                _renderer.Resize(ClientSize.Width, ClientSize.Height)
             End If
         End If
 
@@ -98,7 +98,7 @@ Public Class ModelDisplay
     End Sub
 
     Public Sub SetDrawData(ParamArray aggGeometryGroups() As GeometryGroup)
-        m_aggGeometryGroups = aggGeometryGroups
+        _geometryGroups = aggGeometryGroups
 
         Invalidate()
     End Sub
@@ -107,24 +107,24 @@ Public Class ModelDisplay
         MyBase.OnMouseDown(e)
 
         If e.Button And MouseButtons.Left Then
-            m_blnDragging = True
-            m_intLastMouseX = e.X
-            m_intLastMouseY = e.Y
+            _dragging = True
+            _lastMouseX = e.X
+            _lastMouseY = e.Y
         End If
     End Sub
 
     Protected Overrides Sub OnMouseMove(e As MouseEventArgs)
         MyBase.OnMouseMove(e)
 
-        If m_blnDragging Then
+        If _dragging Then
             If EnableRotation Then
-                Call ApplyDragRotation(e.X - m_intLastMouseX, e.Y - m_intLastMouseY)
+                Call ApplyDragRotation(e.X - _lastMouseX, e.Y - _lastMouseY)
             End If
 
-            RaiseEvent MouseDrag(Me, New MouseDragEventArgs(e.X - m_intLastMouseX, e.Y - m_intLastMouseY))
+            RaiseEvent MouseDrag(Me, New MouseDragEventArgs(e.X - _lastMouseX, e.Y - _lastMouseY))
 
-            m_intLastMouseX = e.X
-            m_intLastMouseY = e.Y
+            _lastMouseX = e.X
+            _lastMouseY = e.Y
         End If
     End Sub
 
@@ -133,20 +133,20 @@ Public Class ModelDisplay
 
         If e.Button And MouseButtons.Left Then
             If EnableRotation Then
-                Call ApplyDragRotation(e.X - m_intLastMouseX, e.Y - m_intLastMouseY)
+                Call ApplyDragRotation(e.X - _lastMouseX, e.Y - _lastMouseY)
             End If
 
-            RaiseEvent MouseDrag(Me, New MouseDragEventArgs(e.X - m_intLastMouseX, e.Y - m_intLastMouseY))
+            RaiseEvent MouseDrag(Me, New MouseDragEventArgs(e.X - _lastMouseX, e.Y - _lastMouseY))
 
-            m_intLastMouseX = e.X
-            m_intLastMouseY = e.Y
-            m_blnDragging = False
+            _lastMouseX = e.X
+            _lastMouseY = e.Y
+            _dragging = False
         End If
     End Sub
 
     Private Sub ApplyDragRotation(intDeltaX As Integer, intDeltaY As Integer)
-        m_qViewQuat *= Quaternion.FromVectors(New Vector3(0, 0, -1), Vector3.Normalize(New Vector3(-intDeltaX * RotationRate, intDeltaY * RotationRate, -1)))
-        m_qViewQuat.Normalize()
+        _viewQuat *= Quaternion.FromVectors(New Vector3(0, 0, -1), Vector3.Normalize(New Vector3(-intDeltaX * RotationRate, intDeltaY * RotationRate, -1)))
+        _viewQuat.Normalize()
 
         Invalidate()
     End Sub
@@ -155,24 +155,24 @@ Public Class ModelDisplay
     End Sub
 
     Protected Overrides Sub OnPaint(e As PaintEventArgs)
-        If m_rRenderer IsNot Nothing Then
-            m_rRenderer.ModelMatrix = m_mModelMatrix
-            m_rRenderer.ViewMatrix = m_qViewQuat.ToMatrix()
-            m_rRenderer.BackColor = Color3.FromColor(BackColor)
-            m_rRenderer.AmbientLightColor = New Color3(0.25, 0.25, 0.25)
-            m_rRenderer.DirectionalLightColor = New Color3(0.75, 0.75, 0.75)
-            m_rRenderer.DirectionalLightDir = New Vector3(-1, -1, 1)
-            m_rRenderer.BeginFrame()
-            For Each ggGroup As GeometryGroup In m_aggGeometryGroups
-                m_rRenderer.ClearDepthBuffer()
-                m_rRenderer.EnableLighting = ggGroup.EnableLighting
+        If _renderer IsNot Nothing Then
+            _renderer.ModelMatrix = _modelMatrix
+            _renderer.ViewMatrix = _viewQuat.ToMatrix()
+            _renderer.BackColor = Color3.FromColor(BackColor)
+            _renderer.AmbientLightColor = New Color3(0.25, 0.25, 0.25)
+            _renderer.DirectionalLightColor = New Color3(0.75, 0.75, 0.75)
+            _renderer.DirectionalLightDir = New Vector3(-1, -1, 1)
+            _renderer.BeginFrame()
+            For Each ggGroup As GeometryGroup In _geometryGroups
+                _renderer.ClearDepthBuffer()
+                _renderer.EnableLighting = ggGroup.EnableLighting
                 If TypeOf ggGroup Is GeometryTriangleGroup Then
-                    m_rRenderer.DrawTriangles(DirectCast(ggGroup, GeometryTriangleGroup).Triangles.ToArray())
+                    _renderer.DrawTriangles(DirectCast(ggGroup, GeometryTriangleGroup).Triangles.ToArray())
                 ElseIf TypeOf ggGroup Is GeometryLineGroup Then
-                    m_rRenderer.DrawLines(DirectCast(ggGroup, GeometryLineGroup).Lines.ToArray())
+                    _renderer.DrawLines(DirectCast(ggGroup, GeometryLineGroup).Lines.ToArray())
                 End If
             Next
-            m_rRenderer.EndFrame()
+            _renderer.EndFrame()
         Else
             e.Graphics.Clear(BackColor)
         End If
@@ -185,8 +185,8 @@ Public Class ModelDisplay
         sngSmallest = Math.Min(ClientSize.Width, ClientSize.Height)
         sngLargest = Math.Max(ClientSize.Width, ClientSize.Height)
 
-        If m_rRenderer IsNot Nothing Then
-            m_rRenderer.ProjMatrix = New Matrix(ClientSize.Height / sngLargest, 0, 0, 0, 0, ClientSize.Width / sngLargest, 0, 0, 0, 0, 0.0001, 0, 0, 0, 0.5, 1) ' Matrix.PerspectiveFovLH(Math.PI / 4, ClientSize.Width / CSng(ClientSize.Height), 0.1, 1000)
+        If _renderer IsNot Nothing Then
+            _renderer.ProjMatrix = New Matrix(ClientSize.Height / sngLargest, 0, 0, 0, 0, ClientSize.Width / sngLargest, 0, 0, 0, 0, 0.0001, 0, 0, 0, 0.5, 1) ' Matrix.PerspectiveFovLH(Math.PI / 4, ClientSize.Width / CSng(ClientSize.Height), 0.1, 1000)
         End If
     End Sub
 End Class

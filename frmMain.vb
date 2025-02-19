@@ -3,18 +3,13 @@ Imports System.IO
 Imports System.Xml
 
 Public Class frmMain
-    Private m_gGeometry As Geometry
-    Private m_gtgSelectedObject As GeometryTriangleGroup
-    Private WithEvents m_bwSlicer As New BackgroundWorker With {.WorkerReportsProgress = True}
-    Private m_lstLayers As List(Of Layer)
-    Private m_fileName As String
+    Private _geometry As Geometry
+    Private _selectedObject As GeometryTriangleGroup
+    Private WithEvents _slicer As New BackgroundWorker With {.WorkerReportsProgress = True}
+    Private _layers As List(Of Layer)
+    Private _fileName As String
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        'mdFront.ViewMatrix = Matrix.Identity() ' .RotationY(Math.PI)
-        'mdRight.ViewMatrix = Matrix.RotationY(-Math.PI / 2)
-        'mdBottom.ViewMatrix = Matrix.RotationX(Math.PI / 2)
-        'mdIso.ViewMatrix = Matrix.RotationY(Math.PI)
-
         mdFront.ViewQuaternion = Quaternion.Identity()
         mdRight.ViewQuaternion = New Quaternion(New Vector3(0, 1, 0), -Math.PI / 2)
         mdBottom.ViewQuaternion = New Quaternion(New Vector3(1, 0, 0), Math.PI / 2)
@@ -41,7 +36,7 @@ Public Class frmMain
         mnuFilePrintPreview.Enabled = False
         tspbProgress.Visible = True
 
-        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray, False))
+        _slicer.RunWorkerAsync(New SliceArgs(_selectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray, False))
     End Sub
 
     Private Sub mnuFilePrint_Click(sender As Object, e As EventArgs) Handles mnuFilePrint.Click
@@ -54,7 +49,7 @@ Public Class frmMain
         mnuFilePrintPreview.Enabled = False
         tspbProgress.Visible = True
 
-        m_bwSlicer.RunWorkerAsync(New SliceArgs(m_gtgSelectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray, True))
+        _slicer.RunWorkerAsync(New SliceArgs(_selectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray, True))
     End Sub
 
     Private Sub mnuFileExit_Click(sender As Object, e As EventArgs) Handles mnuFileExit.Click
@@ -73,22 +68,22 @@ Public Class frmMain
     Private Sub zUpRadioButton_CheckedChanged(sender As Object, e As EventArgs) Handles zUpRadioButton.CheckedChanged
         Dim upAxis As Geometry.Axis = If(zUpRadioButton.Checked, Geometry.Axis.Z, Geometry.Axis.Y)
 
-        if m_gGeometry IsNot Nothing Then
-            m_gGeometry.ChangeUpAxis(upAxis)
+        If _geometry IsNot Nothing Then
+            _geometry.ChangeUpAxis(upAxis)
             LoadModelStats()
             SetSelectedObject(lbObjects.SelectedItem)
-        end if
+        End If
     End Sub
 
     Private Sub unitsComboBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles unitsComboBox.SelectedIndexChanged
         Dim units As String = unitsComboBox.SelectedItem.ToString()
         Dim newUnit As Geometry.Unit = Geometry.StringToUnit(units)
 
-        if m_gGeometry IsNot Nothing Then
-            m_gGeometry.ChangeScale(newUnit)
+        If _geometry IsNot Nothing Then
+            _geometry.ChangeScale(newUnit)
             LoadModelStats()
             SetSelectedObject(lbObjects.SelectedItem)
-        end if
+        End If
     End Sub
 
     Private Sub nudHeight_ValueChanged(sender As Object, e As EventArgs)
@@ -100,49 +95,50 @@ Public Class frmMain
         Call UpdateDisplay()
     End Sub
 
-    Private Sub m_bwSlicer_DoWork(sender As Object, e As DoWorkEventArgs) Handles m_bwSlicer.DoWork
-        Dim saArgs As SliceArgs = DirectCast(e.Argument, SliceArgs)
-        Dim lstOutput As New List(Of Layer)
-        Dim sngYStart As Single
-        Dim vStartPlanePoint As Vector3
-        Dim vEndPlanePoint As Vector3
-        Dim vPlaneNormal As Vector3
-        Dim intSliceIndex As Integer
-        Dim intNumSlices As Integer
+    Private Sub m_bwSlicer_DoWork(sender As Object, e As DoWorkEventArgs) Handles _slicer.DoWork
+        Dim args As SliceArgs = DirectCast(e.Argument, SliceArgs)
+        Dim output As New List(Of Layer)
+        Dim yStart As Single
+        Dim startPlanePoint As Vector3
+        Dim endPlanePoint As Vector3
+        Dim planeNormal As Vector3
+        Dim sliceIndex As Integer
+        Dim numSlices As Integer
 
-        sngYStart = saArgs.Section.Bounds.Minimum.Y
-        vPlaneNormal = New Vector3(0, 1, 0)
+        yStart = args.Section.Bounds.Minimum.Y
+        planeNormal = New Vector3(0, 1, 0)
 
-        intSliceIndex = 0
-        intNumSlices = Math.Ceiling(saArgs.Section.Bounds.Height / saArgs.SliceSize)
+        sliceIndex = 0
+        numSlices = Math.Ceiling(args.Section.Bounds.Height / args.SliceSize)
 
-        While sngYStart < saArgs.Section.Bounds.Maximum.Y
-            m_bwSlicer.ReportProgress(0, New SliceProgress(intSliceIndex, intNumSlices))
+        While yStart < args.Section.Bounds.Maximum.Y
+            _slicer.ReportProgress(0, New SliceProgress(sliceIndex, numSlices))
 
-            vStartPlanePoint = New Vector3(0, sngYStart, 0)
-            vEndPlanePoint = New Vector3(0, sngYStart + saArgs.SliceSize, 0)
+            startPlanePoint = New Vector3(0, yStart, 0)
+            endPlanePoint = New Vector3(0, yStart + args.SliceSize, 0)
 
-            lstOutput.Add(Slicer.Slice(m_gtgSelectedObject, vStartPlanePoint, vEndPlanePoint, vPlaneNormal, saArgs.TopColor, saArgs.BottomColor, saArgs.ContentColor))
+            output.Add(Slicer.Slice(_selectedObject, startPlanePoint, endPlanePoint, planeNormal, args.TopColor, args.BottomColor, args.ContentColor))
 
-            sngYStart += saArgs.SliceSize
-            intSliceIndex += 1
+            yStart += args.SliceSize
+            sliceIndex += 1
         End While
 
-        m_lstLayers = lstOutput
-        e.Result = saArgs.Print
+        _layers = output
+        e.Result = args.Print
     End Sub
 
-    Private Sub m_bwSlicer_ProgressChanged(sender As Object, e As ProgressChangedEventArgs) Handles m_bwSlicer.ProgressChanged
-        Dim spProgress As SliceProgress = DirectCast(e.UserState, SliceProgress)
+    Private Sub m_bwSlicer_ProgressChanged(sender As Object, e As ProgressChangedEventArgs) Handles _slicer.ProgressChanged
+        Dim progress As SliceProgress = DirectCast(e.UserState, SliceProgress)
 
-        tspbProgress.Maximum = spProgress.NumSlices
-        tspbProgress.Value = spProgress.SliceIndex
+        tspbProgress.Maximum = progress.NumSlices
+        tspbProgress.Value = progress.SliceIndex
     End Sub
 
     Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, xMin As Single, zMin As Single, layerName As String) As XmlElement
-        Dim svgLayer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
-        svgLayer.RemoveAllAttributes()
-        svgLayer.SetAttribute("id", layerName)
+        Dim layer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
+
+        layer.RemoveAllAttributes()
+        layer.SetAttribute("id", layerName)
         For Each line As GeometryLine In lines.Lines
             Dim svgLine As XmlElement = xmlDoc.CreateElement("line", "http://www.w3.org/2000/svg")
             svgLine.SetAttribute("x1", (line.V1.X - xMin).ToString())
@@ -150,13 +146,14 @@ Public Class frmMain
             svgLine.SetAttribute("x2", (line.V2.X - xMin).ToString())
             svgLine.SetAttribute("y2", (line.V2.Z - zMin).ToString())
             svgLine.SetAttribute("stroke", line.Color.Name)
-            svgLayer.AppendChild(svgLine)
+            layer.AppendChild(svgLine)
         Next
-        Return svgLayer
+        Return layer
     End Function
 
-    Private Sub m_bwSlicer_RunWorkerCompleted(sender As Object, e As RunWorkerCompletedEventArgs) Handles m_bwSlicer.RunWorkerCompleted
+    Private Sub m_bwSlicer_RunWorkerCompleted(sender As Object, e As RunWorkerCompletedEventArgs) Handles _slicer.RunWorkerCompleted
         Dim printBool As Boolean = DirectCast(e.Result, Boolean)
+
         tsslStatus.Text = String.Empty
         tspbProgress.Value = 0
         tspbProgress.Visible = False
@@ -165,19 +162,20 @@ Public Class frmMain
 
         If e.Error Is Nothing Then
             If printBool Then
-                Using ppdPreview As New PrintPreviewDialog
-                    Using llpdPrint As New LayerListPrintDocument(m_lstLayers)
-                        ppdPreview.Document = llpdPrint
+                Using preview As New PrintPreviewDialog
+                    Using llpdPrint As New LayerListPrintDocument(_layers)
+                        preview.Document = llpdPrint
 
-                        ppdPreview.ShowDialog(Me)
+                        preview.ShowDialog(Me)
                     End Using
                 End Using
             Else
-                Using sf As New SaveFileDialog
-                    sf.FileName = "Select the folder to save SVG files"
-                    If sf.ShowDialog() = DialogResult.OK Then
-                        Dim selectedPath As String = Path.GetDirectoryName(sf.FileName)
-                        For Each layer As Layer In m_lstLayers
+                Using saveDialog As New SaveFileDialog
+                    saveDialog.FileName = "Select the folder to save SVG files"
+                    If saveDialog.ShowDialog() = DialogResult.OK Then
+                        Dim selectedPath As String = Path.GetDirectoryName(saveDialog.FileName)
+
+                        For Each layer As Layer In _layers
                             Dim xmlDoc As New XmlDocument()
                             Dim svgRoot As XmlElement = xmlDoc.CreateElement("svg", "http://www.w3.org/2000/svg")
                             xmlDoc.AppendChild(svgRoot)
@@ -191,7 +189,7 @@ Public Class frmMain
                             Dim svgLayerBottom As XmlElement = ConvertLayerToSvg(xmlDoc, layer.BottomOutline, xMin, zMin, "bottom")
                             svgRoot.AppendChild(svgLayerBottom)
 
-                            xmlDoc.Save(Path.Combine(selectedPath, "layer" & m_lstLayers.IndexOf(layer) & ".svg"))
+                            xmlDoc.Save(Path.Combine(selectedPath, "layer" & _layers.IndexOf(layer) & ".svg"))
                         Next
                     End If
                 End Using
@@ -200,25 +198,25 @@ Public Class frmMain
     End Sub
 
     Private Sub LoadModelStats()
-        Dim decTotalHeight As Decimal
-        Dim decTotalWidth As Decimal
-        Dim decTotalDepth As Decimal
-        Dim decTotalArea As Decimal
+        Dim totalHeight As Decimal
+        Dim totalWidth As Decimal
+        Dim totalDepth As Decimal
+        Dim totalArea As Decimal
 
-        decTotalHeight = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height).Sum()
-        decTotalWidth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Width).Sum()
-        decTotalDepth = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Depth).Sum()
-        decTotalArea = (From gtgPart As GeometryTriangleGroup In m_gGeometry.Groups Select gtgPart.Bounds.Height * gtgPart.Bounds.Width * gtgPart.Bounds.Depth).Sum() / 1000000000
+        totalHeight = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Height).Sum()
+        totalWidth = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Width).Sum()
+        totalDepth = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Depth).Sum()
+        totalArea = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Height * gtgPart.Bounds.Width * gtgPart.Bounds.Depth).Sum() / 1000000000
 
-        lblTotalHeight.Text = decTotalHeight.ToString("#,##0") & " mm"
-        lblTotalWidth.Text = decTotalWidth.ToString("#,##0") & " mm"
-        lblTotalDepth.Text = decTotalDepth.ToString("#,##0") & " mm"
-        lblTotalVolume.Text = decTotalArea.ToString("#,##0.000") & " M³"
+        lblTotalHeight.Text = totalHeight.ToString("#,##0") & " mm"
+        lblTotalWidth.Text = totalWidth.ToString("#,##0") & " mm"
+        lblTotalDepth.Text = totalDepth.ToString("#,##0") & " mm"
+        lblTotalVolume.Text = totalArea.ToString("#,##0.000") & " M³"
     End Sub
 
     Private Sub ReloadModelFile()
-        If m_fileName IsNot Nothing Then
-            OpenModelFile(m_fileName)
+        If _fileName IsNot Nothing Then
+            OpenModelFile(_fileName)
         End If
     End Sub
 
@@ -227,40 +225,40 @@ Public Class frmMain
         Dim loadUnit As Geometry.Unit = Geometry.StringToUnit(units)
         Dim upAxis As Geometry.Axis = If(zUpRadioButton.Checked, Geometry.Axis.Z, Geometry.Axis.Y)
 
-        m_gGeometry = Geometry.LoadWavefrontObj(strFile, loadUnit, upAxis)
+        _geometry = Geometry.LoadWavefrontObj(strFile, loadUnit, upAxis)
 
         LoadModelStats()
 
         tsslFile.Text = strFile
 
         tsslFile.Text = strFile
-        m_fileName = strFile
+        _fileName = strFile
 
         mnuFileReload.Enabled = True
         mnuFileExport.Enabled = True
         mnuFilePrint.Enabled = True
         mnuFilePrintPreview.Enabled = True
 
-        lbObjects.DataSource = m_gGeometry.Groups
+        lbObjects.DataSource = _geometry.Groups
     End Sub
 
     Private Sub SetSelectedObject(gtgObject As GeometryTriangleGroup)
-        Dim mModelMatrix As Matrix
+        Dim modelMatrix As Matrix
 
-        m_gtgSelectedObject = gtgObject
+        _selectedObject = gtgObject
 
-        If m_gtgSelectedObject IsNot Nothing Then
-            mModelMatrix = Matrix.FromBoundingBox(m_gtgSelectedObject.Bounds)
+        If _selectedObject IsNot Nothing Then
+            modelMatrix = Matrix.FromBoundingBox(_selectedObject.Bounds)
 
-            mdFront.ModelMatrix = mModelMatrix
-            mdRight.ModelMatrix = mModelMatrix
-            mdBottom.ModelMatrix = mModelMatrix
-            mdIso.ModelMatrix = mModelMatrix * Matrix.Scale(1 / 1.212)
+            mdFront.ModelMatrix = modelMatrix
+            mdRight.ModelMatrix = modelMatrix
+            mdBottom.ModelMatrix = modelMatrix
+            mdIso.ModelMatrix = modelMatrix * Matrix.Scale(1 / 1.212)
 
-            lblHeight.Text = (m_gtgSelectedObject.Bounds.Height).ToString("#,##0") & " mm"
-            lblWidth.Text = (m_gtgSelectedObject.Bounds.Width).ToString("#,##0") & " mm"
-            lblDepth.Text = (m_gtgSelectedObject.Bounds.Depth).ToString("#,##0") & " mm"
-            lblVolume.Text = (m_gtgSelectedObject.Bounds.Height * m_gtgSelectedObject.Bounds.Width * m_gtgSelectedObject.Bounds.Depth / 1000000000).ToString("#,##0.000") & " M³"
+            lblHeight.Text = (_selectedObject.Bounds.Height).ToString("#,##0") & " mm"
+            lblWidth.Text = (_selectedObject.Bounds.Width).ToString("#,##0") & " mm"
+            lblDepth.Text = (_selectedObject.Bounds.Depth).ToString("#,##0") & " mm"
+            lblVolume.Text = (_selectedObject.Bounds.Height * _selectedObject.Bounds.Width * _selectedObject.Bounds.Depth / 1000000000).ToString("#,##0.000") & " M³"
         Else
             lblHeight.Text = String.Empty
             lblWidth.Text = String.Empty
@@ -273,8 +271,8 @@ Public Class frmMain
     End Sub
 
     Private Sub UpdateTrackBar()
-        If m_gtgSelectedObject IsNot Nothing Then
-            Dim intNumSlices As Integer = Math.Ceiling(m_gtgSelectedObject.Bounds.Height / nudThickness.Value)
+        If _selectedObject IsNot Nothing Then
+            Dim intNumSlices As Integer = Math.Ceiling(_selectedObject.Bounds.Height / nudThickness.Value)
             tbSlice.Maximum = intNumSlices
             lblSlices.Text = intNumSlices
         Else
@@ -284,40 +282,40 @@ Public Class frmMain
     End Sub
 
     Private Sub UpdateDisplay()
-        Dim vSliceStart As Vector3
-        Dim vSliceEnd As Vector3
-        Dim vSliceDir As Vector3
-        Dim gtgSlice As GeometryTriangleGroup
-        Dim mMesh As MesherXYZ
-        Dim gtgFullGeom As GeometryTriangleGroup
-        Dim gtgSliceGeom As GeometryTriangleGroup
-        Dim glgSliceLines As GeometryLineGroup
-        Dim glgEndLines As GeometryLineGroup
-        Dim glgStartLines As GeometryLineGroup
-        Dim glgOpeningLines As GeometryLineGroup
-        Dim glgSilhouette As GeometryLineGroup
+        Dim sliceStart As Vector3
+        Dim sliceEnd As Vector3
+        Dim sliceDir As Vector3
+        Dim slice As GeometryTriangleGroup
+        Dim mesher As MesherXYZ
+        Dim fullGeom As GeometryTriangleGroup
+        Dim sliceGeom As GeometryTriangleGroup
+        Dim sliceLines As GeometryLineGroup
+        Dim endLines As GeometryLineGroup
+        Dim startLines As GeometryLineGroup
+        Dim openingLines As GeometryLineGroup
+        Dim silhouette As GeometryLineGroup
 
-        If m_gtgSelectedObject IsNot Nothing Then
-            vSliceStart = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * (tbSlice.Value + 1), 0)
-            vSliceEnd = New Vector3(0, m_gtgSelectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * tbSlice.Value, 0)
-            vSliceDir = New Vector3(0, -1, 0)
+        If _selectedObject IsNot Nothing Then
+            sliceStart = New Vector3(0, _selectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * (tbSlice.Value + 1), 0)
+            sliceEnd = New Vector3(0, _selectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * tbSlice.Value, 0)
+            sliceDir = New Vector3(0, -1, 0)
 
-            gtgSlice = Slicer.ExtractBetweenPlanes(m_gtgSelectedObject, vSliceStart, vSliceEnd, vSliceDir)
-            mMesh = New MesherXYZ(m_gtgSelectedObject)
+            slice = Slicer.ExtractBetweenPlanes(_selectedObject, sliceStart, sliceEnd, sliceDir)
+            mesher = New MesherXYZ(_selectedObject)
 
-            gtgFullGeom = m_gtgSelectedObject.CloneWithColor(Color.LightGray)
-            gtgSliceGeom = gtgSlice.CloneWithColor(Color.DarkGray)
-            glgSliceLines = gtgSlice.ToLineGroup(Color.Black)
-            glgEndLines = Slicer.OutlineModelPlane(gtgSlice, vSliceEnd, vSliceDir, Color.Blue)
-            glgStartLines = Slicer.OutlineModelPlane(gtgSlice, vSliceStart, vSliceDir, Color.Red)
-            glgOpeningLines = mMesh.CreateDisconnectedEdgesLineGroup(Color.Orange)
-            glgSilhouette = mMesh.CreateSilhouette(vSliceDir, Color.Green)
+            fullGeom = _selectedObject.CloneWithColor(Color.LightGray)
+            sliceGeom = slice.CloneWithColor(Color.DarkGray)
+            sliceLines = slice.ToLineGroup(Color.Black)
+            endLines = Slicer.OutlineModelPlane(slice, sliceEnd, sliceDir, Color.Blue)
+            startLines = Slicer.OutlineModelPlane(slice, sliceStart, sliceDir, Color.Red)
+            openingLines = mesher.CreateDisconnectedEdgesLineGroup(Color.Orange)
+            silhouette = mesher.CreateSilhouette(sliceDir, Color.Green)
 
-            mdFront.SetDrawData(gtgFullGeom, gtgSliceGeom, glgEndLines, glgStartLines, glgOpeningLines)
-            mdRight.SetDrawData(gtgFullGeom, gtgSliceGeom, glgEndLines, glgStartLines, glgOpeningLines)
-            mdBottom.SetDrawData(gtgFullGeom, gtgSliceGeom, glgEndLines, glgStartLines, glgOpeningLines, glgSilhouette)
+            mdFront.SetDrawData(fullGeom, sliceGeom, endLines, startLines, openingLines)
+            mdRight.SetDrawData(fullGeom, sliceGeom, endLines, startLines, openingLines)
+            mdBottom.SetDrawData(fullGeom, sliceGeom, endLines, startLines, openingLines, silhouette)
             'mdIso.SetDrawData(gtgFullGeom, gtgSliceGeom, glgSliceLines, glgEndLines, glgStartLines, glgOpeningLines)
-            mdIso.SetDrawData(gtgFullGeom, gtgSliceGeom, glgEndLines, glgStartLines, glgOpeningLines, glgSilhouette)
+            mdIso.SetDrawData(fullGeom, sliceGeom, endLines, startLines, openingLines, silhouette)
         Else
             mdFront.SetDrawData()
             mdRight.SetDrawData()
@@ -334,13 +332,13 @@ Public Class frmMain
         Public ContentColor As Color
         Public Print As Boolean
 
-        Public Sub New(gtgSection As GeometryTriangleGroup, sngSliceSize As Single, cTopColor As Color, cBottomColor As Color, cContentColor As Color, cPrint As Boolean)
-            Section = gtgSection
-            SliceSize = sngSliceSize
-            TopColor = cTopColor
-            BottomColor = cBottomColor
-            ContentColor = cContentColor
-            Print = cPrint
+        Public Sub New(sectionValue As GeometryTriangleGroup, sliceSizeValue As Single, topColorValue As Color, bottomColorValue As Color, contentColorValue As Color, printValue As Boolean)
+            Section = sectionValue
+            SliceSize = sliceSizeValue
+            TopColor = topColorValue
+            BottomColor = bottomColorValue
+            ContentColor = contentColorValue
+            Print = printValue
         End Sub
     End Class
 
@@ -348,9 +346,9 @@ Public Class frmMain
         Public SliceIndex As Integer
         Public NumSlices As Integer
 
-        Public Sub New(intSliceIndex As Integer, intNumSlices As Integer)
-            SliceIndex = intSliceIndex
-            NumSlices = intNumSlices
+        Public Sub New(sliceIndexValue As Integer, numSlicesValue As Integer)
+            SliceIndex = sliceIndexValue
+            NumSlices = numSlicesValue
         End Sub
     End Class
 End Class

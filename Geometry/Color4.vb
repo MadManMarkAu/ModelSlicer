@@ -7,14 +7,14 @@ Public Structure Color4
     Public B As Single
     Public A As Single
 
-    Public Sub New(sngR As Single, sngG As Single, sngB As Single, sngA As Single)
-        R = sngR
-        G = sngG
-        B = sngB
-        A = sngA
+    Public Sub New(red As Single, green As Single, blue As Single, alpha As Single)
+        R = red
+        G = green
+        B = blue
+        A = alpha
     End Sub
 
-    Public Shared Function FromColor(cColor As Color) As Color4
-        Return New Color4(CSng(cColor.R) / 255, CSng(cColor.G) / 255, CSng(cColor.B) / 255, CSng(cColor.A) / 255)
+    Public Shared Function FromColor(color As Color) As Color4
+        Return New Color4(CSng(color.R) / 255, CSng(color.G) / 255, CSng(color.B) / 255, CSng(color.A) / 255)
     End Function
 End Structure

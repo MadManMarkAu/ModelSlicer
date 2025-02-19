@@ -11,34 +11,34 @@
     Public ReadOnly Min As Vector3
     Public ReadOnly Max As Vector3
 
-    Public Sub New(cColor As Color, vV1 As Vector3, vV2 As Vector3)
-        Color = cColor
-        V1 = vV1
-        V2 = vV2
+    Public Sub New(colorValue As Color, v1Value As Vector3, v2Value As Vector3)
+        Color = colorValue
+        V1 = v1Value
+        V2 = v2Value
 
         Min = New Vector3(Math.Min(V1.X, V2.X), Math.Min(V1.Y, V2.Y), Math.Min(V1.Z, V2.Z))
         Max = New Vector3(Math.Max(V1.X, V2.X), Math.Max(V1.Y, V2.Y), Math.Max(V1.Z, V2.Z))
     End Sub
 
-    Public Sub New(cColor As Color, vV1 As Vector3, vV2 As Vector3, vV1Normal As Vector3, vV2Normal As Vector3, vLineNormal As Vector3)
-        Color = cColor
+    Public Sub New(colorValue As Color, v1Value As Vector3, v2Value As Vector3, v1NormalValue As Vector3, v2NormalValue As Vector3, lineNormalValue As Vector3)
+        Color = colorValue
 
-        V1 = vV1
-        V2 = vV2
+        V1 = v1Value
+        V2 = v2Value
 
-        V1Normal = vV1Normal
-        V2Normal = vV2Normal
-        LineNormal = vLineNormal
+        V1Normal = v1NormalValue
+        V2Normal = v2NormalValue
+        LineNormal = lineNormalValue
 
         Min = New Vector3(Math.Min(V1.X, V2.X), Math.Min(V1.Y, V2.Y), Math.Min(V1.Z, V2.Z))
         Max = New Vector3(Math.Max(V1.X, V2.X), Math.Max(V1.Y, V2.Y), Math.Max(V1.Z, V2.Z))
     End Sub
 
-    Public Shared Operator =(glLeft As GeometryLine, glRight As GeometryLine) As Boolean
-        Return glLeft.V1 = glRight.V1 AndAlso glLeft.V2 = glRight.V2 AndAlso glLeft.Color = glRight.Color
+    Public Shared Operator =(left As GeometryLine, right As GeometryLine) As Boolean
+        Return left.V1 = right.V1 AndAlso left.V2 = right.V2 AndAlso left.Color = right.Color
     End Operator
 
-    Public Shared Operator <>(glLeft As GeometryLine, glRight As GeometryLine) As Boolean
-        Return glLeft.V1 <> glRight.V1 OrElse glLeft.V2 <> glRight.V2 OrElse glLeft.Color <> glRight.Color
+    Public Shared Operator <>(left As GeometryLine, right As GeometryLine) As Boolean
+        Return left.V1 <> right.V1 OrElse left.V2 <> right.V2 OrElse left.Color <> right.Color
     End Operator
 End Structure

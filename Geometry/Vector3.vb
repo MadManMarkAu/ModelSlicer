@@ -6,10 +6,10 @@ Public Structure Vector3
     Public Y As Single
     Public Z As Single
 
-    Public Sub New(sngX As Single, sngY As Single, sngZ As Single)
-        X = sngX
-        Y = sngY
-        Z = sngZ
+    Public Sub New(xValue As Single, yValue As Single, zValue As Single)
+        X = xValue
+        Y = yValue
+        Z = zValue
     End Sub
 
     Public Function LengthSquared() As Single
@@ -21,11 +21,11 @@ Public Structure Vector3
     End Function
 
     Public Sub Normalize()
-        Dim sngLength As Single = Length()
+        Dim len As Single = Length()
 
-        X = X / sngLength
-        Y = Y / sngLength
-        Z = Z / sngLength
+        X = X / len
+        Y = Y / len
+        Z = Z / len
     End Sub
 
     Public Function Vector2XY() As Vector2
@@ -53,59 +53,59 @@ Public Structure Vector3
     End Function
 
     Public Overrides Function ToString() As String
-        Return "X=" & X & ", Y=" & Y & ", Z=" & Z
+        Return $"X={X}, Y={Y}, Z={Z}"
     End Function
 
-    Public Function SwapUpAxis()
+    Public Function SwapUpAxis() As Vector3
         Return New Vector3(X, -Z, -Y)
     End Function
 
-    Public Shared Function Normalize(vVec As Vector3) As Vector3
-        Dim sngLength As Single = vVec.Length()
+    Public Shared Function Normalize(vec As Vector3) As Vector3
+        Dim len As Single = vec.Length()
 
-        Return New Vector3(vVec.X / sngLength, vVec.Y / sngLength, vVec.Z / sngLength)
+        Return New Vector3(vec.X / len, vec.Y / len, vec.Z / len)
     End Function
 
-    Public Shared Function Cross(vVec1 As Vector3, vVec2 As Vector3) As Vector3
+    Public Shared Function Cross(vec1 As Vector3, vec2 As Vector3) As Vector3
         Return New Vector3(
-            vVec1.Y * vVec2.Z - vVec1.Z * vVec2.Y,
-            vVec1.Z * vVec2.X - vVec1.X * vVec2.Z,
-            vVec1.X * vVec2.Y - vVec1.Y * vVec2.X)
+            vec1.Y * vec2.Z - vec1.Z * vec2.Y,
+            vec1.Z * vec2.X - vec1.X * vec2.Z,
+            vec1.X * vec2.Y - vec1.Y * vec2.X)
     End Function
 
-    Public Shared Function DotProduct(vVec1 As Vector3, vVec2 As Vector3) As Single
-        Return vVec1.X * vVec2.X + vVec1.Y * vVec2.Y + vVec1.Z * vVec2.Z
+    Public Shared Function DotProduct(vec1 As Vector3, vec2 As Vector3) As Single
+        Return vec1.X * vec2.X + vec1.Y * vec2.Y + vec1.Z * vec2.Z
     End Function
 
-    Public Shared Operator +(vVec1 As Vector3, vVec2 As Vector3) As Vector3
-        Return New Vector3(vVec1.X + vVec2.X, vVec1.Y + vVec2.Y, vVec1.Z + vVec2.Z)
+    Public Shared Operator +(vec1 As Vector3, vec2 As Vector3) As Vector3
+        Return New Vector3(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z)
     End Operator
 
-    Public Shared Operator -(vVec1 As Vector3, vVec2 As Vector3) As Vector3
-        Return New Vector3(vVec1.X - vVec2.X, vVec1.Y - vVec2.Y, vVec1.Z - vVec2.Z)
+    Public Shared Operator -(vec1 As Vector3, vec2 As Vector3) As Vector3
+        Return New Vector3(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z)
     End Operator
 
-    Public Shared Operator *(vVec1 As Vector3, vVec2 As Vector3) As Vector3
-        Return New Vector3(vVec1.X * vVec2.X, vVec1.Y * vVec2.Y, vVec1.Z * vVec2.Z)
+    Public Shared Operator *(vec1 As Vector3, vec2 As Vector3) As Vector3
+        Return New Vector3(vec1.X * vec2.X, vec1.Y * vec2.Y, vec1.Z * vec2.Z)
     End Operator
 
-    Public Shared Operator *(vVec1 As Vector3, sngK As Single) As Vector3
-        Return New Vector3(vVec1.X * sngK, vVec1.Y * sngK, vVec1.Z * sngK)
+    Public Shared Operator *(vec1 As Vector3, k As Single) As Vector3
+        Return New Vector3(vec1.X * k, vec1.Y * k, vec1.Z * k)
     End Operator
 
-    Public Shared Operator *(sngK As Single, vVec1 As Vector3) As Vector3
-        Return New Vector3(vVec1.X * sngK, vVec1.Y * sngK, vVec1.Z * sngK)
+    Public Shared Operator *(k As Single, vec1 As Vector3) As Vector3
+        Return New Vector3(vec1.X * k, vec1.Y * k, vec1.Z * k)
     End Operator
 
-    Public Shared Operator /(vVec1 As Vector3, sngK As Single) As Vector3
-        Return New Vector3(vVec1.X / sngK, vVec1.Y / sngK, vVec1.Z / sngK)
+    Public Shared Operator /(vec1 As Vector3, k As Single) As Vector3
+        Return New Vector3(vec1.X / k, vec1.Y / k, vec1.Z / k)
     End Operator
 
-    Public Shared Operator =(vVec1 As Vector3, vVec2 As Vector3) As Boolean
-        Return vVec1.X = vVec2.X AndAlso vVec1.Y = vVec2.Y AndAlso vVec1.Z = vVec2.Z
+    Public Shared Operator =(vec1 As Vector3, vec2 As Vector3) As Boolean
+        Return vec1.X = vec2.X AndAlso vec1.Y = vec2.Y AndAlso vec1.Z = vec2.Z
     End Operator
 
-    Public Shared Operator <>(vVec1 As Vector3, vVec2 As Vector3) As Boolean
-        Return vVec1.X <> vVec2.X OrElse vVec1.Y <> vVec2.Y OrElse vVec1.Z <> vVec2.Z
+    Public Shared Operator <>(vec1 As Vector3, vec2 As Vector3) As Boolean
+        Return vec1.X <> vec2.X OrElse vec1.Y <> vec2.Y OrElse vec1.Z <> vec2.Z
     End Operator
 End Structure

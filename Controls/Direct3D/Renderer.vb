@@ -14,125 +14,125 @@ Public Class Renderer
     Private Const MULTISAMPLE_COUNT As Integer = 8
     Private Const VERTEX_BUFFER_SIZE As Integer = 4096
 
-    Private m_dDevice As Device
-    Private m_scdSwapChainDescription As SwapChainDescription
-    Private m_scSwapChain As SwapChain
-    Private m_tBackBuffer As Texture2D
-    Private m_tdDepthBufferDesc As Texture2DDescription
-    Private m_tDepthBuffer As Texture2D
-    Private m_rtvRenderTargetView As RenderTargetView
-    Private m_dsvDepthStencilView As DepthStencilView
-    Private m_dcContext As DeviceContext
-    Private m_blnDisposed As Boolean
+    Private _device As Device
+    Private _swapChainDescription As SwapChainDescription
+    Private _swapChain As SwapChain
+    Private _backBuffer As Texture2D
+    Private _depthBufferDesc As Texture2DDescription
+    Private _depthBuffer As Texture2D
+    Private _renderTargetView As RenderTargetView
+    Private _depthStencilView As DepthStencilView
+    Private _context As DeviceContext
+    Private _disposed As Boolean
 
-    Private m_crVertexShaderBytecode As CompilationResult
-    Private m_vsVertexShader As VertexShader
-    Private m_crPixelShaderBytecode As CompilationResult
-    Private m_psPixelShader As PixelShader
-    Private m_ssShaderSignature As ShaderSignature
-    Private m_ilShaderInputLayout As InputLayout
+    Private _vertexShaderBytecode As CompilationResult
+    Private _vertexShader As VertexShader
+    Private _pixelShaderBytecode As CompilationResult
+    Private _pixelShader As PixelShader
+    Private _shaderSignature As ShaderSignature
+    Private _shaderInputLayout As InputLayout
 
-    Private m_bVertexBuffer As Buffer
+    Private _vertexBuffer As Buffer
 
-    Private m_mMatricies As New Matrices(Matrix.Identity, Matrix.Identity, Matrix.Identity)
-    Private m_bMatricies As Buffer
-    Private m_mModelMatrix As Matrix
-    Private m_mViewMatrix As Matrix
-    Private m_mProjMatrix As Matrix
+    Private _matrices As New Matrices(Matrix.Identity, Matrix.Identity, Matrix.Identity)
+    Private _matricesBuffer As Buffer
+    Private _modelMatrix As Matrix
+    Private _viewMatrix As Matrix
+    Private _projMatrix As Matrix
 
-    Private m_lpLightParams As New LightParams(New Color3(1, 1, 1), New Color3(0.1, 0.1, 0.1), New Vector3(1, 1, -1), False)
-    Private m_bLightParams As Buffer
+    Private _lightParams As New LightParams(New Color3(1, 1, 1), New Color3(0.1, 0.1, 0.1), New Vector3(1, 1, -1), False)
+    Private _lightParamsBuffer As Buffer
 
     Public Property BackColor As Color3 = New Color3(0.25, 0.25, 0.75)
 
     Public Property AmbientLightColor As Color3
         Get
-            Return m_lpLightParams.AmbientLightColor
+            Return _lightParams.AmbientLightColor
         End Get
         Set(value As Color3)
-            m_lpLightParams.AmbientLightColor = value
+            _lightParams.AmbientLightColor = value
 
-            m_dcContext.UpdateSubresource(m_lpLightParams, m_bLightParams)
+            _context.UpdateSubresource(_lightParams, _lightParamsBuffer)
         End Set
     End Property
 
     Public Property DirectionalLightColor As Color3
         Get
-            Return m_lpLightParams.DirectionalLightColor
+            Return _lightParams.DirectionalLightColor
         End Get
         Set(value As Color3)
-            m_lpLightParams.DirectionalLightColor = value
+            _lightParams.DirectionalLightColor = value
 
-            m_dcContext.UpdateSubresource(m_lpLightParams, m_bLightParams)
+            _context.UpdateSubresource(_lightParams, _lightParamsBuffer)
         End Set
     End Property
 
     Public Property DirectionalLightDir As Vector3
         Get
-            Return m_lpLightParams.DirectionalLightDir
+            Return _lightParams.DirectionalLightDir
         End Get
         Set(value As Vector3)
-            m_lpLightParams.DirectionalLightDir = value
+            _lightParams.DirectionalLightDir = value
 
-            m_dcContext.UpdateSubresource(m_lpLightParams, m_bLightParams)
+            _context.UpdateSubresource(_lightParams, _lightParamsBuffer)
         End Set
     End Property
 
     Public Property EnableLighting As Boolean
         Get
-            Return m_lpLightParams.EnableLighting <> 0
+            Return _lightParams.EnableLighting <> 0
         End Get
         Set(value As Boolean)
-            m_lpLightParams.EnableLighting = If(value, -1, 0)
+            _lightParams.EnableLighting = If(value, -1, 0)
 
-            m_dcContext.UpdateSubresource(m_lpLightParams, m_bLightParams)
+            _context.UpdateSubresource(_lightParams, _lightParamsBuffer)
         End Set
     End Property
 
     Public Property ModelMatrix As Matrix
         Get
-            Return m_mModelMatrix
+            Return _modelMatrix
         End Get
         Set(value As Matrix)
-            m_mModelMatrix = value
-            m_mMatricies.Model = value
+            _modelMatrix = value
+            _matrices.Model = value
 
-            m_mMatricies.Model.Transpose()
+            _matrices.Model.Transpose()
 
-            m_dcContext.UpdateSubresource(m_mMatricies, m_bMatricies)
+            _context.UpdateSubresource(_matrices, _matricesBuffer)
         End Set
     End Property
 
     Public Property ViewMatrix As Matrix
         Get
-            Return m_mViewMatrix
+            Return _viewMatrix
         End Get
         Set(value As Matrix)
-            m_mViewMatrix = value
-            m_mMatricies.View = value
+            _viewMatrix = value
+            _matrices.View = value
 
-            m_mMatricies.View.Transpose()
+            _matrices.View.Transpose()
 
-            m_dcContext.UpdateSubresource(m_mMatricies, m_bMatricies)
+            _context.UpdateSubresource(_matrices, _matricesBuffer)
         End Set
     End Property
 
     Public Property ProjMatrix As Matrix
         Get
-            Return m_mProjMatrix
+            Return _projMatrix
         End Get
         Set(value As Matrix)
-            m_mProjMatrix = value
-            m_mMatricies.Proj = value
+            _projMatrix = value
+            _matrices.Proj = value
 
-            m_mMatricies.Proj.Transpose()
+            _matrices.Proj.Transpose()
 
-            m_dcContext.UpdateSubresource(m_mMatricies, m_bMatricies)
+            _context.UpdateSubresource(_matrices, _matricesBuffer)
         End Set
     End Property
 
     Public Sub New(hWnd As IntPtr, intWidth As Integer, intHeight As Integer)
-        m_scdSwapChainDescription = New SwapChainDescription() With {
+        _swapChainDescription = New SwapChainDescription() With {
             .ModeDescription = New ModeDescription(intWidth, intHeight, New Rational(60, 1), Format.R8G8B8A8_UNorm),
             .SampleDescription = New SampleDescription(MULTISAMPLE_COUNT, 0),
             .Usage = Usage.BackBuffer Or Usage.RenderTargetOutput,
@@ -146,14 +146,14 @@ Public Class Renderer
         Device.CreateWithSwapChain(Direct3D.DriverType.Hardware,
             DeviceCreationFlags.Debug,
             New Direct3D.FeatureLevel() {Direct3D.FeatureLevel.Level_11_1, Direct3D.FeatureLevel.Level_11_0, Direct3D.FeatureLevel.Level_10_1, Direct3D.FeatureLevel.Level_10_0},
-            m_scdSwapChainDescription, m_dDevice, m_scSwapChain)
+            _swapChainDescription, _device, _swapChain)
 
-        m_dcContext = m_dDevice.ImmediateContext
+        _context = _device.ImmediateContext
 
-        m_tBackBuffer = Direct3D11.Resource.FromSwapChain(Of Texture2D)(m_scSwapChain, 0)
-        m_rtvRenderTargetView = New RenderTargetView(m_dDevice, m_tBackBuffer)
+        _backBuffer = Direct3D11.Resource.FromSwapChain(Of Texture2D)(_swapChain, 0)
+        _renderTargetView = New RenderTargetView(_device, _backBuffer)
 
-        m_tdDepthBufferDesc = New Texture2DDescription() With {
+        _depthBufferDesc = New Texture2DDescription() With {
             .Format = Format.D32_Float,
             .ArraySize = 1,
             .MipLevels = 1,
@@ -166,7 +166,7 @@ Public Class Renderer
             .OptionFlags = ResourceOptionFlags.None
         }
 
-        Dim dssdDesc As New DepthStencilStateDescription() With {
+        Dim desc As New DepthStencilStateDescription() With {
             .IsDepthEnabled = True,
             .DepthWriteMask = DepthWriteMask.All,
             .DepthComparison = Comparison.Less,
@@ -186,174 +186,174 @@ Public Class Renderer
             }
         }
 
-        Dim dssState As New DepthStencilState(m_dDevice, dssdDesc)
+        Dim state As New DepthStencilState(_device, desc)
 
-        m_tDepthBuffer = New Texture2D(m_dDevice, m_tdDepthBufferDesc)
-        m_dsvDepthStencilView = New DepthStencilView(m_dDevice, m_tDepthBuffer)
+        _depthBuffer = New Texture2D(_device, _depthBufferDesc)
+        _depthStencilView = New DepthStencilView(_device, _depthBuffer)
 
-        m_dcContext.Rasterizer.SetViewport(New RawViewportF() With {.Width = intWidth, .Height = intHeight, .MinDepth = 0F, .MaxDepth = 1.0F})
-        m_dcContext.OutputMerger.SetTargets(m_dsvDepthStencilView, m_rtvRenderTargetView)
-        m_dcContext.OutputMerger.SetDepthStencilState(dssState)
+        _context.Rasterizer.SetViewport(New RawViewportF() With {.Width = intWidth, .Height = intHeight, .MinDepth = 0F, .MaxDepth = 1.0F})
+        _context.OutputMerger.SetTargets(_depthStencilView, _renderTargetView)
+        _context.OutputMerger.SetDepthStencilState(state)
 
         'm_crVertexShaderBytecode = ShaderBytecode.CompileFromFile("shader.fx", "VS", "vs_4_0")
-        m_crVertexShaderBytecode = ShaderBytecode.Compile(GetResource("shader.fx"), "VS", "vs_4_0")
-        m_vsVertexShader = New VertexShader(m_dDevice, m_crVertexShaderBytecode)
+        _vertexShaderBytecode = ShaderBytecode.Compile(GetResource("shader.fx"), "VS", "vs_4_0")
+        _vertexShader = New VertexShader(_device, _vertexShaderBytecode)
 
         'm_crPixelShaderBytecode = ShaderBytecode.CompileFromFile("shader.fx", "PS", "ps_4_0")
-        m_crPixelShaderBytecode = ShaderBytecode.Compile(GetResource("shader.fx"), "PS", "ps_4_0")
-        m_psPixelShader = New PixelShader(m_dDevice, m_crPixelShaderBytecode)
+        _pixelShaderBytecode = ShaderBytecode.Compile(GetResource("shader.fx"), "PS", "ps_4_0")
+        _pixelShader = New PixelShader(_device, _pixelShaderBytecode)
 
-        m_ssShaderSignature = ShaderSignature.GetInputSignature(m_crVertexShaderBytecode)
-        m_ilShaderInputLayout = New InputLayout(
-            m_dDevice,
-            m_ssShaderSignature,
+        _shaderSignature = ShaderSignature.GetInputSignature(_vertexShaderBytecode)
+        _shaderInputLayout = New InputLayout(
+            _device,
+            _shaderSignature,
             New InputElement() {
                 New InputElement("POSITION", 0, Format.R32G32B32_Float, 0, 0),
                 New InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
                 New InputElement("COLOR", 0, Format.R32G32B32A32_Float, 24, 0)
             })
 
-        m_dcContext.InputAssembler.InputLayout = m_ilShaderInputLayout
+        _context.InputAssembler.InputLayout = _shaderInputLayout
 
         ' Create vertex buffer
-        m_bVertexBuffer = New Buffer(m_dDevice, Utilities.SizeOf(Of Vertex)() * VERTEX_BUFFER_SIZE, ResourceUsage.Dynamic, BindFlags.VertexBuffer, CpuAccessFlags.Write, ResourceOptionFlags.None, Utilities.SizeOf(Of Vertex)())
+        _vertexBuffer = New Buffer(_device, Utilities.SizeOf(Of Vertex)() * VERTEX_BUFFER_SIZE, ResourceUsage.Dynamic, BindFlags.VertexBuffer, CpuAccessFlags.Write, ResourceOptionFlags.None, Utilities.SizeOf(Of Vertex)())
 
         ' Create constant buffers
-        m_bMatricies = New Buffer(m_dDevice, Utilities.SizeOf(Of Matrices)(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0)
-        m_bLightParams = New Buffer(m_dDevice, Utilities.SizeOf(Of LightParams)(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0)
+        _matricesBuffer = New Buffer(_device, Utilities.SizeOf(Of Matrices)(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0)
+        _lightParamsBuffer = New Buffer(_device, Utilities.SizeOf(Of LightParams)(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0)
 
         ' Assign the matrices buffer
-        m_dcContext.UpdateSubresource(m_mMatricies, m_bMatricies)
-        m_dcContext.VertexShader.SetConstantBuffer(0, m_bMatricies)
-        m_dcContext.PixelShader.SetConstantBuffer(0, m_bMatricies)
+        _context.UpdateSubresource(_matrices, _matricesBuffer)
+        _context.VertexShader.SetConstantBuffer(0, _matricesBuffer)
+        _context.PixelShader.SetConstantBuffer(0, _matricesBuffer)
 
         ' Assign the lighting params buffer
-        m_dcContext.UpdateSubresource(m_lpLightParams, m_bLightParams)
-        m_dcContext.VertexShader.SetConstantBuffer(1, m_bLightParams)
-        m_dcContext.PixelShader.SetConstantBuffer(1, m_bLightParams)
+        _context.UpdateSubresource(_lightParams, _lightParamsBuffer)
+        _context.VertexShader.SetConstantBuffer(1, _lightParamsBuffer)
+        _context.PixelShader.SetConstantBuffer(1, _lightParamsBuffer)
 
-        m_dcContext.VertexShader.Set(m_vsVertexShader)
-        m_dcContext.PixelShader.Set(m_psPixelShader)
+        _context.VertexShader.Set(_vertexShader)
+        _context.PixelShader.Set(_pixelShader)
     End Sub
 
     Public Sub Resize(intWidth As Integer, intHeight As Integer)
-        m_dsvDepthStencilView.Dispose()
-        m_tDepthBuffer.Dispose()
-        m_rtvRenderTargetView.Dispose()
-        m_tBackBuffer.Dispose()
+        _depthStencilView.Dispose()
+        _depthBuffer.Dispose()
+        _renderTargetView.Dispose()
+        _backBuffer.Dispose()
 
-        m_scSwapChain.ResizeBuffers(m_scdSwapChainDescription.BufferCount, intWidth, intHeight, Format.Unknown, SwapChainFlags.None)
+        _swapChain.ResizeBuffers(_swapChainDescription.BufferCount, intWidth, intHeight, Format.Unknown, SwapChainFlags.None)
 
-        m_tBackBuffer = Direct3D11.Resource.FromSwapChain(Of Texture2D)(m_scSwapChain, 0)
-        m_rtvRenderTargetView = New RenderTargetView(m_dDevice, m_tBackBuffer)
+        _backBuffer = Direct3D11.Resource.FromSwapChain(Of Texture2D)(_swapChain, 0)
+        _renderTargetView = New RenderTargetView(_device, _backBuffer)
 
-        m_tdDepthBufferDesc.Width = intWidth
-        m_tdDepthBufferDesc.Height = intHeight
+        _depthBufferDesc.Width = intWidth
+        _depthBufferDesc.Height = intHeight
 
-        m_tDepthBuffer = New Texture2D(m_dDevice, m_tdDepthBufferDesc)
-        m_dsvDepthStencilView = New DepthStencilView(m_dDevice, m_tDepthBuffer)
+        _depthBuffer = New Texture2D(_device, _depthBufferDesc)
+        _depthStencilView = New DepthStencilView(_device, _depthBuffer)
 
-        m_dcContext.Rasterizer.SetViewport(0, 0, intWidth, intHeight, 0F, 1.0F)
-        m_dcContext.OutputMerger.SetTargets(m_dsvDepthStencilView, m_rtvRenderTargetView)
+        _context.Rasterizer.SetViewport(0, 0, intWidth, intHeight, 0F, 1.0F)
+        _context.OutputMerger.SetTargets(_depthStencilView, _renderTargetView)
     End Sub
 
     Public Sub BeginFrame()
-        m_dcContext.ClearDepthStencilView(m_dsvDepthStencilView, DepthStencilClearFlags.Depth, 1.0F, 0)
-        m_dcContext.ClearRenderTargetView(m_rtvRenderTargetView, New RawColor4(BackColor.R, BackColor.G, BackColor.B, 1.0))
+        _context.ClearDepthStencilView(_depthStencilView, DepthStencilClearFlags.Depth, 1.0F, 0)
+        _context.ClearRenderTargetView(_renderTargetView, New RawColor4(BackColor.R, BackColor.G, BackColor.B, 1.0))
     End Sub
 
     Public Sub ClearDepthBuffer()
-        m_dcContext.ClearDepthStencilView(m_dsvDepthStencilView, DepthStencilClearFlags.Depth, 1.0F, 0)
+        _context.ClearDepthStencilView(_depthStencilView, DepthStencilClearFlags.Depth, 1.0F, 0)
     End Sub
 
-    Public Sub DrawTriangles(agtTriangles() As GeometryTriangle)
-        If agtTriangles.Length > 0 Then
-            Dim avVertexes(agtTriangles.Length * 3 - 1) As Vertex
-            Dim intOffset As Integer
+    Public Sub DrawTriangles(triangles() As GeometryTriangle)
+        If triangles.Length > 0 Then
+            Dim vertexes(triangles.Length * 3 - 1) As Vertex
+            Dim offset As Integer
 
-            For Each gtTriangle As GeometryTriangle In agtTriangles
-                avVertexes(intOffset) = New Vertex(gtTriangle.V1, gtTriangle.V1Normal, gtTriangle.Color)
-                intOffset += 1
-                avVertexes(intOffset) = New Vertex(gtTriangle.V2, gtTriangle.V2Normal, gtTriangle.Color)
-                intOffset += 1
-                avVertexes(intOffset) = New Vertex(gtTriangle.V3, gtTriangle.V3Normal, gtTriangle.Color)
-                intOffset += 1
+            For Each gtTriangle As GeometryTriangle In triangles
+                vertexes(offset) = New Vertex(gtTriangle.V1, gtTriangle.V1Normal, gtTriangle.Color)
+                offset += 1
+                vertexes(offset) = New Vertex(gtTriangle.V2, gtTriangle.V2Normal, gtTriangle.Color)
+                offset += 1
+                vertexes(offset) = New Vertex(gtTriangle.V3, gtTriangle.V3Normal, gtTriangle.Color)
+                offset += 1
             Next
 
-            m_dcContext.InputAssembler.PrimitiveTopology = Direct3D.PrimitiveTopology.TriangleList
+            _context.InputAssembler.PrimitiveTopology = Direct3D.PrimitiveTopology.TriangleList
 
-            Call SendVertexArray(avVertexes, 3)
+            Call SendVertexArray(vertexes, 3)
         End If
     End Sub
 
-    Public Sub DrawLines(aglLines() As GeometryLine)
-        If aglLines.Length > 0 Then
-            Dim avVertexes(aglLines.Length * 2 - 1) As Vertex
-            Dim intOffset As Integer
+    Public Sub DrawLines(lines() As GeometryLine)
+        If lines.Length > 0 Then
+            Dim vertexes(lines.Length * 2 - 1) As Vertex
+            Dim offset As Integer
 
-            For Each glLine As GeometryLine In aglLines
-                avVertexes(intOffset) = New Vertex(glLine.V1, glLine.V1Normal, glLine.Color)
-                intOffset += 1
-                avVertexes(intOffset) = New Vertex(glLine.V2, glLine.V2Normal, glLine.Color)
-                intOffset += 1
+            For Each glLine As GeometryLine In lines
+                vertexes(offset) = New Vertex(glLine.V1, glLine.V1Normal, glLine.Color)
+                offset += 1
+                vertexes(offset) = New Vertex(glLine.V2, glLine.V2Normal, glLine.Color)
+                offset += 1
             Next
 
-            m_dcContext.InputAssembler.PrimitiveTopology = Direct3D.PrimitiveTopology.LineList
+            _context.InputAssembler.PrimitiveTopology = Direct3D.PrimitiveTopology.LineList
 
-            Call SendVertexArray(avVertexes, 2)
+            Call SendVertexArray(vertexes, 2)
         End If
     End Sub
 
-    Private Sub SendVertexArray(avVertexes() As Vertex, intGrouping As Integer)
-        Dim intOffset As Integer
-        Dim intLength As Integer
-        Dim dbBox As DataBox
+    Private Sub SendVertexArray(vertexes() As Vertex, grouping As Integer)
+        Dim offset As Integer
+        Dim length As Integer
+        Dim box As DataBox
 
         Do
-            intLength = Math.Min(avVertexes.Length - intOffset, VERTEX_BUFFER_SIZE)
-            intLength -= intLength Mod intGrouping
+            length = Math.Min(vertexes.Length - offset, VERTEX_BUFFER_SIZE)
+            length -= length Mod grouping
 
-            dbBox = m_dcContext.MapSubresource(m_bVertexBuffer, 0, MapMode.WriteDiscard, Direct3D11.MapFlags.None)
+            box = _context.MapSubresource(_vertexBuffer, 0, MapMode.WriteDiscard, Direct3D11.MapFlags.None)
 
-            WriteStructArrayToIntPtr(avVertexes, intOffset, intLength, dbBox.DataPointer)
-            intOffset += intLength
+            WriteStructArrayToIntPtr(vertexes, offset, length, box.DataPointer)
+            offset += length
 
-            m_dcContext.UnmapSubresource(m_bVertexBuffer, 0)
+            _context.UnmapSubresource(_vertexBuffer, 0)
 
 
-            m_dcContext.InputAssembler.SetVertexBuffers(0, New VertexBufferBinding(m_bVertexBuffer, Utilities.SizeOf(Of Vertex)(), 0))
-            m_dcContext.Draw(intLength, 0)
+            _context.InputAssembler.SetVertexBuffers(0, New VertexBufferBinding(_vertexBuffer, Utilities.SizeOf(Of Vertex)(), 0))
+            _context.Draw(length, 0)
 
-        Loop Until intOffset >= avVertexes.Length
+        Loop Until offset >= vertexes.Length
     End Sub
 
-    Private Sub WriteStructArrayToIntPtr(Of T As Structure)(atArray() As T, intOffset As Integer, intLength As Integer, ipDest As IntPtr)
-        Dim intStructSize As Integer = Marshal.SizeOf(Of T)()
-        Dim gchSource As GCHandle
-        Dim ipSource As IntPtr
+    Private Sub WriteStructArrayToIntPtr(Of T As Structure)(array() As T, offset As Integer, length As Integer, dest As IntPtr)
+        Dim structSize As Integer = Marshal.SizeOf(Of T)()
+        Dim sourceHandle As GCHandle
+        Dim sourcePtr As IntPtr
 
         Try
-            gchSource = GCHandle.Alloc(atArray, GCHandleType.Pinned)
-            ipSource = gchSource.AddrOfPinnedObject()
+            sourceHandle = GCHandle.Alloc(array, GCHandleType.Pinned)
+            sourcePtr = sourceHandle.AddrOfPinnedObject()
 
-            CopyMemory(ipDest, ipSource + intOffset * intStructSize, intLength * intStructSize)
+            CopyMemory(dest, sourcePtr + offset * structSize, length * structSize)
         Finally
-            gchSource.Free()
+            sourceHandle.Free()
         End Try
     End Sub
 
     Public Sub EndFrame()
-        m_scSwapChain.Present(0, PresentFlags.None)
+        _swapChain.Present(0, PresentFlags.None)
     End Sub
 
-    Private Function GetResource(strName As String) As Byte()
-        Dim aAssem As Assembly
+    Private Function GetResource(name As String) As Byte()
+        Dim assem As Assembly
 
-        aAssem = Assembly.GetExecutingAssembly()
+        assem = Assembly.GetExecutingAssembly()
 
-        Using sStream As Stream = aAssem.GetManifestResourceStream(aAssem.GetName().Name & "." & strName)
+        Using stream As Stream = assem.GetManifestResourceStream(assem.GetName().Name & "." & name)
             Using msStream As New MemoryStream
-                sStream.CopyTo(msStream)
+                stream.CopyTo(msStream)
 
                 Return msStream.ToArray()
             End Using
@@ -366,10 +366,10 @@ Public Class Renderer
         Public View As Matrix
         Public Proj As Matrix
 
-        Public Sub New(mModel As Matrix, mView As Matrix, mProj As Matrix)
-            Model = mModel
-            View = mView
-            Proj = mProj
+        Public Sub New(modelValue As Matrix, viewValue As Matrix, projValue As Matrix)
+            Model = modelValue
+            View = viewValue
+            Proj = projValue
         End Sub
     End Structure
 
@@ -386,11 +386,11 @@ Public Class Renderer
         Public Padding5 As Single
         Public Padding6 As Single
 
-        Public Sub New(cAmbientLightColor As Color3, cDirectionalLightColor As Color3, vDirectionalLightDir As Vector3, blnEnableLighting As Boolean)
-            AmbientLightColor = cAmbientLightColor
-            DirectionalLightColor = cDirectionalLightColor
-            DirectionalLightDir = vDirectionalLightDir
-            EnableLighting = If(blnEnableLighting, -1, 0)
+        Public Sub New(ambientLightColorValue As Color3, directionalLightColorValue As Color3, directionalLightDirValue As Vector3, enableLightingValue As Boolean)
+            AmbientLightColor = ambientLightColorValue
+            DirectionalLightColor = directionalLightColorValue
+            DirectionalLightDir = directionalLightDirValue
+            EnableLighting = If(enableLightingValue, -1, 0)
         End Sub
     End Structure
 
@@ -400,45 +400,45 @@ Public Class Renderer
         Public Normal As Vector3
         Public Color As Color4
 
-        Public Sub New(vPos As Vector3, vNormal As Vector3, cColor As Color4)
-            Pos = vPos
-            Normal = vNormal
-            Color = cColor
+        Public Sub New(posValue As Vector3, normalValue As Vector3, colorValue As Color4)
+            Pos = posValue
+            Normal = normalValue
+            Color = colorValue
         End Sub
 
-        Public Sub New(vPos As Vector3, vNormal As Vector3, cColor As Color)
-            Pos = vPos
-            Normal = vNormal
-            Color = New Color4(CSng(cColor.R) / 255, CSng(cColor.G) / 255, CSng(cColor.B) / 255, CSng(cColor.A) / 255)
+        Public Sub New(posValue As Vector3, normalValue As Vector3, colorValue As Color)
+            Pos = posValue
+            Normal = normalValue
+            Color = New Color4(CSng(colorValue.R) / 255, CSng(colorValue.G) / 255, CSng(colorValue.B) / 255, CSng(colorValue.A) / 255)
         End Sub
     End Structure
 
 #Region "IDisposable Support"
     Protected Overridable Sub Dispose(disposing As Boolean)
-        If Not m_blnDisposed Then
+        If Not _disposed Then
             If disposing Then
-                m_bLightParams.Dispose()
-                m_bMatricies.Dispose()
+                _lightParamsBuffer.Dispose()
+                _matricesBuffer.Dispose()
 
-                m_bVertexBuffer.Dispose()
-                m_ilShaderInputLayout.Dispose()
-                m_ssShaderSignature.Dispose()
-                m_crVertexShaderBytecode.Dispose()
-                m_vsVertexShader.Dispose()
-                m_crPixelShaderBytecode.Dispose()
-                m_psPixelShader.Dispose()
+                _vertexBuffer.Dispose()
+                _shaderInputLayout.Dispose()
+                _shaderSignature.Dispose()
+                _vertexShaderBytecode.Dispose()
+                _vertexShader.Dispose()
+                _pixelShaderBytecode.Dispose()
+                _pixelShader.Dispose()
 
-                m_rtvRenderTargetView.Dispose()
-                m_dsvDepthStencilView.Dispose()
-                m_tBackBuffer.Dispose()
-                m_tDepthBuffer.Dispose()
-                m_dcContext.ClearState()
-                m_dcContext.Dispose()
-                m_dDevice.Dispose()
-                m_scSwapChain.Dispose()
+                _renderTargetView.Dispose()
+                _depthStencilView.Dispose()
+                _backBuffer.Dispose()
+                _depthBuffer.Dispose()
+                _context.ClearState()
+                _context.Dispose()
+                _device.Dispose()
+                _swapChain.Dispose()
             End If
         End If
-        m_blnDisposed = True
+        _disposed = True
     End Sub
 
     Public Sub Dispose() Implements IDisposable.Dispose
