@@ -76,8 +76,7 @@ Public Class frmMain
     End Sub
 
     Private Sub unitsComboBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles unitsComboBox.SelectedIndexChanged
-        Dim units As String = unitsComboBox.SelectedItem.ToString()
-        Dim newUnit As Unit = Geometry.StringToUnit(units)
+        Dim newUnit As Unit = unitsComboBox.SelectedIndex
 
         If _geometry IsNot Nothing Then
             _geometry.ChangeScale(newUnit)
@@ -221,25 +220,26 @@ Public Class frmMain
     End Sub
 
     Private Sub OpenModelFile(strFile As String)
-        Dim units As String = unitsComboBox.SelectedItem.ToString()
-        Dim loadUnit As Unit = Geometry.StringToUnit(units)
-        Dim upAxis As Axis = If(zUpRadioButton.Checked, Axis.Z, Axis.Y)
+        Using importDialog As New frmImport
+            importDialog.FileName = strFile
+            If importDialog.ShowDialog(Me) = DialogResult.OK Then
+                _geometry = importDialog.Result
 
-        _geometry = Geometry.LoadWavefrontObj(strFile, loadUnit, upAxis)
+                LoadModelStats()
 
-        LoadModelStats()
+                tsslFile.Text = strFile
 
-        tsslFile.Text = strFile
+                tsslFile.Text = strFile
+                _fileName = strFile
 
-        tsslFile.Text = strFile
-        _fileName = strFile
+                mnuFileReload.Enabled = True
+                mnuFileExport.Enabled = True
+                mnuFilePrint.Enabled = True
+                mnuFilePrintPreview.Enabled = True
 
-        mnuFileReload.Enabled = True
-        mnuFileExport.Enabled = True
-        mnuFilePrint.Enabled = True
-        mnuFilePrintPreview.Enabled = True
-
-        lbObjects.DataSource = _geometry.Groups
+                lbObjects.DataSource = _geometry.Groups
+            End If
+        End Using
     End Sub
 
     Private Sub SetSelectedObject(gtgObject As GeometryTriangleGroup)

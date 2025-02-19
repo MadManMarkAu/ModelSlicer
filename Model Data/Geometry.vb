@@ -19,8 +19,8 @@ Public Class Geometry
     End Function
 
     Private _bounds As BoundingBox
-    Private _unit As Unit = Unit.Millimeter
-    Private _upAxis As Axis = Axis.Y
+    Private _currUnit As Unit = Unit.Millimeter
+    Private _currUpAxis As Axis = Axis.Y
 
     ''' <summary>
     ''' Describes the objects contained in the geometry data
@@ -44,11 +44,13 @@ Public Class Geometry
                 {0.001, 0.01, 1, 0.025, 0.305},'M
                 {0.039, 0.394, 39.37, 1, 12},'IN
                 {0.003, 0.033, 3.281, 0.083, 1} 'FT
-            }(_unit, newUnit)
-        For i As Integer = 0 To (Groups.Count - 1)
+            }(_currUnit, newUnit)
+
+        For i As Integer = 0 To Groups.Count - 1
             Groups(i).Scale(scale)
         Next i
-        _unit = newUnit
+
+        _currUnit = newUnit
     End Sub
 
     Public Sub ChangeUpAxis(newUpAxis As Axis)
@@ -56,11 +58,11 @@ Public Class Geometry
         Dim newUp As Vector3
         Dim quat As Quaternion
 
-        If _upAxis = newUpAxis Then
-            'Return
+        If _currUpAxis = newUpAxis Then
+            Return
         End If
 
-        Select Case _upAxis
+        Select Case _currUpAxis
             Case Axis.X
                 oldUp = New Vector3(1, 0, 0)
 
@@ -90,7 +92,7 @@ Public Class Geometry
             Groups(i).ApplyQuaternion(quat)
         Next
 
-        _upAxis = newUpAxis
+        _currUpAxis = newUpAxis
     End Sub
 
     ''' <summary>
@@ -199,8 +201,8 @@ Public Class Geometry
     ''' Loads a Wavefront OBJ file (*.obj) from a file.
     ''' </summary>
     ''' <param name="fileName">The obj file to load.</param>
-    ''' <param name="scale">The scale factor to use.</param>
-    ''' <param name="zUp">If the model is z up or y up.</param>
+    ''' <param name="unit">The units to convert the model file to. The assumption is that model units are expressed as millimeters.</param>
+    ''' <param name="upAxis">If the model is z up or y up.</param>
     ''' <returns>A <see cref="Geometry"/> object describing the model.</returns>
     Public Shared Function LoadWavefrontObj(fileName As String, unit As Unit, upAxis As Axis) As Geometry
         Dim output As New Geometry
