@@ -1,7 +1,7 @@
 ﻿Public Enum Unit As Integer
-    MM
-    CM
-    M
-    [IN]
-    FT
+    Millimeter
+    Centimeter
+    Meter
+    Inch
+    Foot
 End Enum

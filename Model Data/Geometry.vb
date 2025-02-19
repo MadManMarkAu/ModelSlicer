@@ -4,22 +4,22 @@ Public Class Geometry
     Public Shared Function StringToUnit(name As String) As Unit
         Select Case name.ToLower()
             Case "millimeters"
-                Return Unit.MM
+                Return Unit.Millimeter
             Case "centimeters"
-                Return Unit.CM
+                Return Unit.Centimeter
             Case "meters"
-                Return Unit.M
+                Return Unit.Meter
             Case "inches"
-                Return Unit.IN
+                Return Unit.Inch
             Case "feet"
-                Return Unit.FT
+                Return Unit.Foot
             Case Else
-                Return Unit.MM
+                Return Unit.Millimeter
         End Select
     End Function
 
     Private _bounds As BoundingBox
-    Private _unit As Unit = Unit.MM
+    Private _unit As Unit = Unit.Millimeter
     Private _upAxis As Axis = Axis.Y
 
     ''' <summary>
