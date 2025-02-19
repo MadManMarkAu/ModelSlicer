@@ -144,7 +144,7 @@ Public Class Renderer
         }
 
         Device.CreateWithSwapChain(Direct3D.DriverType.Hardware,
-            DeviceCreationFlags.Debug,
+            DeviceCreationFlags.None,
             New Direct3D.FeatureLevel() {Direct3D.FeatureLevel.Level_11_1, Direct3D.FeatureLevel.Level_11_0, Direct3D.FeatureLevel.Level_10_1, Direct3D.FeatureLevel.Level_10_0},
             _swapChainDescription, _device, _swapChain)
 

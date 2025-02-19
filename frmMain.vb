@@ -66,7 +66,7 @@ Public Class frmMain
     End Sub
 
     Private Sub zUpRadioButton_CheckedChanged(sender As Object, e As EventArgs) Handles zUpRadioButton.CheckedChanged
-        Dim upAxis As Geometry.Axis = If(zUpRadioButton.Checked, Geometry.Axis.Z, Geometry.Axis.Y)
+        Dim upAxis As Axis = If(zUpRadioButton.Checked, Axis.Z, Axis.Y)
 
         If _geometry IsNot Nothing Then
             _geometry.ChangeUpAxis(upAxis)
@@ -77,7 +77,7 @@ Public Class frmMain
 
     Private Sub unitsComboBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles unitsComboBox.SelectedIndexChanged
         Dim units As String = unitsComboBox.SelectedItem.ToString()
-        Dim newUnit As Geometry.Unit = Geometry.StringToUnit(units)
+        Dim newUnit As Unit = Geometry.StringToUnit(units)
 
         If _geometry IsNot Nothing Then
             _geometry.ChangeScale(newUnit)
@@ -222,8 +222,8 @@ Public Class frmMain
 
     Private Sub OpenModelFile(strFile As String)
         Dim units As String = unitsComboBox.SelectedItem.ToString()
-        Dim loadUnit As Geometry.Unit = Geometry.StringToUnit(units)
-        Dim upAxis As Geometry.Axis = If(zUpRadioButton.Checked, Geometry.Axis.Z, Geometry.Axis.Y)
+        Dim loadUnit As Unit = Geometry.StringToUnit(units)
+        Dim upAxis As Axis = If(zUpRadioButton.Checked, Axis.Z, Axis.Y)
 
         _geometry = Geometry.LoadWavefrontObj(strFile, loadUnit, upAxis)
 
