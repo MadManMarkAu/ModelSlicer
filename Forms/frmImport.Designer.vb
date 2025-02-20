@@ -27,9 +27,9 @@ Partial Class frmImport
         Me.Label2 = New System.Windows.Forms.Label()
         Me.cmbUnits = New System.Windows.Forms.ComboBox()
         Me.GroupBox1 = New System.Windows.Forms.GroupBox()
-        Me.rbUpX = New System.Windows.Forms.RadioButton()
-        Me.rbUpY = New System.Windows.Forms.RadioButton()
         Me.rbUpZ = New System.Windows.Forms.RadioButton()
+        Me.rbUpY = New System.Windows.Forms.RadioButton()
+        Me.rbUpX = New System.Windows.Forms.RadioButton()
         Me.butImport = New System.Windows.Forms.Button()
         Me.butCancel = New System.Windows.Forms.Button()
         Me.GroupBox1.SuspendLayout()
@@ -51,7 +51,7 @@ Partial Class frmImport
         Me.txtFileName.Location = New System.Drawing.Point(81, 12)
         Me.txtFileName.Name = "txtFileName"
         Me.txtFileName.ReadOnly = True
-        Me.txtFileName.Size = New System.Drawing.Size(560, 20)
+        Me.txtFileName.Size = New System.Drawing.Size(229, 20)
         Me.txtFileName.TabIndex = 1
         '
         'Label2
@@ -72,7 +72,7 @@ Partial Class frmImport
         Me.cmbUnits.Items.AddRange(New Object() {"Millimeters", "Centimeters", "Meters", "Inches", "Feet"})
         Me.cmbUnits.Location = New System.Drawing.Point(81, 38)
         Me.cmbUnits.Name = "cmbUnits"
-        Me.cmbUnits.Size = New System.Drawing.Size(560, 21)
+        Me.cmbUnits.Size = New System.Drawing.Size(229, 21)
         Me.cmbUnits.TabIndex = 3
         '
         'GroupBox1
@@ -84,21 +84,21 @@ Partial Class frmImport
         Me.GroupBox1.Controls.Add(Me.rbUpX)
         Me.GroupBox1.Location = New System.Drawing.Point(12, 65)
         Me.GroupBox1.Name = "GroupBox1"
-        Me.GroupBox1.Size = New System.Drawing.Size(629, 46)
+        Me.GroupBox1.Size = New System.Drawing.Size(298, 46)
         Me.GroupBox1.TabIndex = 4
         Me.GroupBox1.TabStop = False
         Me.GroupBox1.Text = "Up Axis"
         '
-        'rbUpX
+        'rbUpZ
         '
-        Me.rbUpX.AutoSize = True
-        Me.rbUpX.Location = New System.Drawing.Point(6, 19)
-        Me.rbUpX.Name = "rbUpX"
-        Me.rbUpX.Size = New System.Drawing.Size(49, 17)
-        Me.rbUpX.TabIndex = 0
-        Me.rbUpX.TabStop = True
-        Me.rbUpX.Text = "X-Up"
-        Me.rbUpX.UseVisualStyleBackColor = True
+        Me.rbUpZ.AutoSize = True
+        Me.rbUpZ.Location = New System.Drawing.Point(116, 19)
+        Me.rbUpZ.Name = "rbUpZ"
+        Me.rbUpZ.Size = New System.Drawing.Size(49, 17)
+        Me.rbUpZ.TabIndex = 2
+        Me.rbUpZ.TabStop = True
+        Me.rbUpZ.Text = "Z-Up"
+        Me.rbUpZ.UseVisualStyleBackColor = True
         '
         'rbUpY
         '
@@ -112,21 +112,21 @@ Partial Class frmImport
         Me.rbUpY.Text = "Y-Up"
         Me.rbUpY.UseVisualStyleBackColor = True
         '
-        'rbUpZ
+        'rbUpX
         '
-        Me.rbUpZ.AutoSize = True
-        Me.rbUpZ.Location = New System.Drawing.Point(116, 19)
-        Me.rbUpZ.Name = "rbUpZ"
-        Me.rbUpZ.Size = New System.Drawing.Size(49, 17)
-        Me.rbUpZ.TabIndex = 2
-        Me.rbUpZ.TabStop = True
-        Me.rbUpZ.Text = "Z-Up"
-        Me.rbUpZ.UseVisualStyleBackColor = True
+        Me.rbUpX.AutoSize = True
+        Me.rbUpX.Location = New System.Drawing.Point(6, 19)
+        Me.rbUpX.Name = "rbUpX"
+        Me.rbUpX.Size = New System.Drawing.Size(49, 17)
+        Me.rbUpX.TabIndex = 0
+        Me.rbUpX.TabStop = True
+        Me.rbUpX.Text = "X-Up"
+        Me.rbUpX.UseVisualStyleBackColor = True
         '
         'butImport
         '
         Me.butImport.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.butImport.Location = New System.Drawing.Point(485, 117)
+        Me.butImport.Location = New System.Drawing.Point(154, 117)
         Me.butImport.Name = "butImport"
         Me.butImport.Size = New System.Drawing.Size(75, 23)
         Me.butImport.TabIndex = 5
@@ -137,7 +137,7 @@ Partial Class frmImport
         '
         Me.butCancel.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.butCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel
-        Me.butCancel.Location = New System.Drawing.Point(566, 117)
+        Me.butCancel.Location = New System.Drawing.Point(235, 117)
         Me.butCancel.Name = "butCancel"
         Me.butCancel.Size = New System.Drawing.Size(75, 23)
         Me.butCancel.TabIndex = 6
@@ -150,7 +150,7 @@ Partial Class frmImport
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.CancelButton = Me.butCancel
-        Me.ClientSize = New System.Drawing.Size(653, 152)
+        Me.ClientSize = New System.Drawing.Size(322, 152)
         Me.Controls.Add(Me.butCancel)
         Me.Controls.Add(Me.butImport)
         Me.Controls.Add(Me.GroupBox1)
@@ -162,6 +162,7 @@ Partial Class frmImport
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.Name = "frmImport"
+        Me.ShowInTaskbar = False
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent
         Me.Text = "Import OBJ File"
         Me.GroupBox1.ResumeLayout(False)

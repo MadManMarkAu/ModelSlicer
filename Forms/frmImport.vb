@@ -22,6 +22,10 @@ Public Class frmImport
         End Get
     End Property
 
+    Private Sub frmImport_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        cmbUnits.SelectedIndex = 0
+    End Sub
+
     Private Sub butImport_Click(sender As Object, e As EventArgs) Handles butImport.Click
         Dim loadUnit As Unit
         Dim upAxis As Axis

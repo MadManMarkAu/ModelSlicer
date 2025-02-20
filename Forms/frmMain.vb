@@ -13,7 +13,7 @@ Public Class frmMain
         mdFront.ViewQuaternion = Quaternion.Identity()
         mdRight.ViewQuaternion = New Quaternion(New Vector3(0, 1, 0), -Math.PI / 2)
         mdBottom.ViewQuaternion = New Quaternion(New Vector3(1, 0, 0), Math.PI / 2)
-        mdIso.ViewQuaternion = Quaternion.Identity() ' New Quaternion(New Vector3(0, 1, 0), Math.PI)
+        mdIso.ViewQuaternion = Quaternion.Identity()
     End Sub
 
     Private Sub mnuFileOpen_Click(sender As Object, e As EventArgs) Handles mnuFileOpen.Click
@@ -36,7 +36,7 @@ Public Class frmMain
         mnuFilePrintPreview.Enabled = False
         tspbProgress.Visible = True
 
-        _slicer.RunWorkerAsync(New SliceArgs(_selectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray, False))
+        _slicer.RunWorkerAsync(New SliceArgs(_selectedObject, nudThickness.Value, Color.Red, Color.Blue, Color.LightGray, False))
     End Sub
 
     Private Sub mnuFilePrint_Click(sender As Object, e As EventArgs) Handles mnuFilePrint.Click
@@ -49,11 +49,46 @@ Public Class frmMain
         mnuFilePrintPreview.Enabled = False
         tspbProgress.Visible = True
 
-        _slicer.RunWorkerAsync(New SliceArgs(_selectedObject, CSng(nudThickness.Value), Color.Red, Color.Blue, Color.LightGray, True))
+        _slicer.RunWorkerAsync(New SliceArgs(_selectedObject, nudThickness.Value, Color.Red, Color.Blue, Color.LightGray, True))
     End Sub
 
     Private Sub mnuFileExit_Click(sender As Object, e As EventArgs) Handles mnuFileExit.Click
         Close()
+    End Sub
+
+    Private Sub mnuToolsPreferences_Click(sender As Object, e As EventArgs) Handles mnuToolsPreferences.Click
+        Using prefs As New frmPreferences
+            If prefs.ShowDialog(Me) = DialogResult.OK Then
+                If _geometry IsNot Nothing Then
+                    LoadModelStats()
+                    SetSelectedObject(lbObjects.SelectedItem)
+                End If
+            End If
+        End Using
+    End Sub
+
+    Private Sub mnuToolsChangeUnits_Click(sender As Object, e As EventArgs) Handles mnuToolsChangeUnits.Click
+        If _geometry IsNot Nothing Then
+            Using changeUnits = New frmChangeUnits
+                changeUnits.Geometry = _geometry
+                If changeUnits.ShowDialog(Me) = DialogResult.OK Then
+                    LoadModelStats()
+                    SetSelectedObject(lbObjects.SelectedItem)
+                End If
+            End Using
+        End If
+    End Sub
+
+    Private Sub mnuToolsChangeUpAxis_Click(sender As Object, e As EventArgs) Handles mnuToolsChangeUpAxis.Click
+        If _geometry IsNot Nothing Then
+            Using changeUpAxis = New frmChangeUpAxis
+                changeUpAxis.Geometry = _geometry
+                If changeUpAxis.ShowDialog(Me) = DialogResult.OK Then
+                    LoadModelStats()
+                    SetSelectedObject(lbObjects.SelectedItem)
+                End If
+            End Using
+        End If
     End Sub
 
     Private Sub lbObjects_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lbObjects.SelectedIndexChanged
@@ -63,26 +98,6 @@ Public Class frmMain
     Private Sub nudThickness_ValueChanged(sender As Object, e As EventArgs) Handles nudThickness.ValueChanged
         Call UpdateTrackBar()
         Call UpdateDisplay()
-    End Sub
-
-    Private Sub zUpRadioButton_CheckedChanged(sender As Object, e As EventArgs) Handles zUpRadioButton.CheckedChanged
-        Dim upAxis As Axis = If(zUpRadioButton.Checked, Axis.Z, Axis.Y)
-
-        If _geometry IsNot Nothing Then
-            _geometry.ChangeUpAxis(upAxis)
-            LoadModelStats()
-            SetSelectedObject(lbObjects.SelectedItem)
-        End If
-    End Sub
-
-    Private Sub unitsComboBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles unitsComboBox.SelectedIndexChanged
-        Dim newUnit As Unit = unitsComboBox.SelectedIndex
-
-        If _geometry IsNot Nothing Then
-            _geometry.ChangeScale(newUnit)
-            LoadModelStats()
-            SetSelectedObject(lbObjects.SelectedItem)
-        End If
     End Sub
 
     Private Sub nudHeight_ValueChanged(sender As Object, e As EventArgs)
@@ -197,19 +212,21 @@ Public Class frmMain
     End Sub
 
     Private Sub LoadModelStats()
-        Dim totalHeight As Decimal
-        Dim totalWidth As Decimal
-        Dim totalDepth As Decimal
-        Dim totalArea As Decimal
+        Dim totalHeight As Single
+        Dim totalWidth As Single
+        Dim totalDepth As Single
+        Dim totalArea As Single
 
         totalHeight = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Height).Sum()
         totalWidth = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Width).Sum()
         totalDepth = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Depth).Sum()
-        totalArea = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Height * gtgPart.Bounds.Width * gtgPart.Bounds.Depth).Sum() / 1000000000
+        totalArea = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select ConvertUnit(gtgPart.Bounds.Height, _geometry.Units, Unit.Millimeter) *
+                                                                                   ConvertUnit(gtgPart.Bounds.Width, _geometry.Units, Unit.Millimeter) *
+                                                                                   ConvertUnit(gtgPart.Bounds.Depth, _geometry.Units, Unit.Millimeter)).Sum() / 1000000000
 
-        lblTotalHeight.Text = totalHeight.ToString("#,##0") & " mm"
-        lblTotalWidth.Text = totalWidth.ToString("#,##0") & " mm"
-        lblTotalDepth.Text = totalDepth.ToString("#,##0") & " mm"
+        lblTotalHeight.Text = FormatUnit(totalHeight, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
+        lblTotalWidth.Text = FormatUnit(totalWidth, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
+        lblTotalDepth.Text = FormatUnit(totalDepth, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
         lblTotalVolume.Text = totalArea.ToString("#,##0.000") & " M³"
     End Sub
 
@@ -219,23 +236,27 @@ Public Class frmMain
         End If
     End Sub
 
-    Private Sub OpenModelFile(strFile As String)
+    Private Sub OpenModelFile(fileName As String)
         Using importDialog As New frmImport
-            importDialog.FileName = strFile
+            importDialog.FileName = fileName
             If importDialog.ShowDialog(Me) = DialogResult.OK Then
                 _geometry = importDialog.Result
 
                 LoadModelStats()
 
-                tsslFile.Text = strFile
+                tsslFile.Text = fileName
 
-                tsslFile.Text = strFile
-                _fileName = strFile
+                tsslFile.Text = fileName
+                _fileName = fileName
 
                 mnuFileReload.Enabled = True
                 mnuFileExport.Enabled = True
                 mnuFilePrint.Enabled = True
                 mnuFilePrintPreview.Enabled = True
+                mnuToolsChangeUnits.Enabled = True
+                mnuToolsChangeUpAxis.Enabled = True
+
+                Text = $"Slicer - {Path.GetFileName(_fileName)}"
 
                 lbObjects.DataSource = _geometry.Groups
             End If
@@ -255,10 +276,12 @@ Public Class frmMain
             mdBottom.ModelMatrix = modelMatrix
             mdIso.ModelMatrix = modelMatrix * Matrix.Scale(1 / 1.212)
 
-            lblHeight.Text = (_selectedObject.Bounds.Height).ToString("#,##0") & " mm"
-            lblWidth.Text = (_selectedObject.Bounds.Width).ToString("#,##0") & " mm"
-            lblDepth.Text = (_selectedObject.Bounds.Depth).ToString("#,##0") & " mm"
-            lblVolume.Text = (_selectedObject.Bounds.Height * _selectedObject.Bounds.Width * _selectedObject.Bounds.Depth / 1000000000).ToString("#,##0.000") & " M³"
+            lblHeight.Text = FormatUnit(_selectedObject.Bounds.Height, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
+            lblWidth.Text = FormatUnit(_selectedObject.Bounds.Width, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
+            lblDepth.Text = FormatUnit(_selectedObject.Bounds.Depth, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
+            lblVolume.Text = (ConvertUnit(_selectedObject.Bounds.Height, _geometry.Units, Unit.Millimeter) *
+                ConvertUnit(_selectedObject.Bounds.Width, _geometry.Units, Unit.Millimeter) *
+                ConvertUnit(_selectedObject.Bounds.Depth, _geometry.Units, Unit.Millimeter) / 1000000000).ToString("#,##0.000") & " M³"
         Else
             lblHeight.Text = String.Empty
             lblWidth.Text = String.Empty

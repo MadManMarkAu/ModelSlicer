@@ -23,13 +23,6 @@ Partial Class frmMain
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Me.tbSlice = New System.Windows.Forms.TrackBar()
-
-        Me.modelSettingsGroupBox = New GroupBox()
-        Me.lblUpAxis = New Label()
-        Me.yUpRadioButton = New RadioButton()
-        Me.zUpRadioButton = New RadioButton()
-        Me.lblUnits = New Label()
-        Me.unitsComboBox = New ComboBox()
         Me.GroupBox1 = New System.Windows.Forms.GroupBox()
         Me.nudThickness = New System.Windows.Forms.NumericUpDown()
         Me.Label1 = New System.Windows.Forms.Label()
@@ -48,6 +41,11 @@ Partial Class frmMain
         Me.mnuFilePrintPreview = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripMenuItem1 = New System.Windows.Forms.ToolStripSeparator()
         Me.mnuFileExit = New System.Windows.Forms.ToolStripMenuItem()
+        Me.mnuTools = New System.Windows.Forms.ToolStripMenuItem()
+        Me.mnuToolsChangeUnits = New System.Windows.Forms.ToolStripMenuItem()
+        Me.mnuToolsChangeUpAxis = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ToolStripMenuItem3 = New System.Windows.Forms.ToolStripSeparator()
+        Me.mnuToolsPreferences = New System.Windows.Forms.ToolStripMenuItem()
         Me.GroupBox2 = New System.Windows.Forms.GroupBox()
         Me.lbObjects = New System.Windows.Forms.ListBox()
         Me.StatusStrip1 = New System.Windows.Forms.StatusStrip()
@@ -76,7 +74,6 @@ Partial Class frmMain
         Me.lblWidth = New System.Windows.Forms.Label()
         Me.Label7 = New System.Windows.Forms.Label()
         CType(Me.tbSlice, System.ComponentModel.ISupportInitialize).BeginInit()
-        Me.modelSettingsGroupBox.SuspendLayout()
         Me.GroupBox1.SuspendLayout()
         CType(Me.nudThickness, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.TableLayoutPanel1.SuspendLayout()
@@ -101,67 +98,13 @@ Partial Class frmMain
         Me.tbSlice.TabIndex = 1
         Me.tbSlice.TickStyle = System.Windows.Forms.TickStyle.TopLeft
         '
-        'modelSettingsGroupBox
-        '
-        Me.modelSettingsGroupBox.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
-            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.modelSettingsGroupBox.Controls.Add(Me.lblUpAxis)
-        Me.modelSettingsGroupBox.Controls.Add(Me.yUpRadioButton)
-        Me.modelSettingsGroupBox.Controls.Add(Me.zUpRadioButton)
-        Me.modelSettingsGroupBox.Controls.Add(Me.lblUnits)
-        Me.modelSettingsGroupBox.Controls.Add(Me.unitsComboBox)
-        Me.modelSettingsGroupBox.Location = New System.Drawing.Point(3, 3)
-        Me.modelSettingsGroupBox.Name = "modelSettingsGroupBox"
-        Me.modelSettingsGroupBox.Size = New System.Drawing.Size(325, 70)
-        Me.modelSettingsGroupBox.TabStop = False
-        Me.modelSettingsGroupBox.Text = "Model Settings"
-        '
-        'lblUpAxis
-        '
-        Me.lblUpAxis.AutoSize = True
-        Me.lblUpAxis.Location = New System.Drawing.Point(6, 18)
-        Me.lblUpAxis.Name = "lblUpAxis"
-        Me.lblUpAxis.Text = "Up Axis:"
-        '
-        'yUpRadioButton
-        '
-        Me.yUpRadioButton.AutoSize = True
-        Me.yUpRadioButton.Size = New System.Drawing.Size(50, 24)
-        Me.yUpRadioButton.Checked = True
-        Me.yUpRadioButton.Location = New System.Drawing.Point(Me.lblUpAxis.Left + Me.lblUpAxis.Width + 5, Me.lblUpAxis.Top)
-        Me.yUpRadioButton.Name = "yUpRadioButton"
-        Me.yUpRadioButton.Text = "Y-Up"
-        '
-        'zUpRadioButton
-        '
-        Me.zUpRadioButton.AutoSize = True
-        Me.zUpRadioButton.Location = New System.Drawing.Point(Me.yUpRadioButton.Left + Me.yUpRadioButton.Width + 10, Me.yUpRadioButton.Top)
-        Me.zUpRadioButton.Name = "zUpRadioButton"
-        Me.zUpRadioButton.Text = "Z-Up"
-        '
-        'lblUnits
-        '
-        Me.lblUnits.AutoSize = True
-        Me.lblUnits.Location = New System.Drawing.Point(6, Me.yUpRadioButton.Top + 25)
-        Me.lblUnits.Name = "lblUnits"
-        Me.lblUnits.Text = "Units:"
-        '
-        'unitsComboBox
-        '
-        Me.unitsComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
-        Me.unitsComboBox.FormattingEnabled = True
-        Me.unitsComboBox.Items.AddRange(New Object() {"Millimeters", "Centimeters", "Meters", "Inches", "Feet"})
-        Me.unitsComboBox.Location = New System.Drawing.Point(Me.yUpRadioButton.Left, Me.lblUnits.Top - 3)
-        Me.unitsComboBox.Name = "unitsComboBox"
-        Me.unitsComboBox.SelectedIndex = 0
-        '
         'GroupBox1
         '
         Me.GroupBox1.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.GroupBox1.Controls.Add(Me.nudThickness)
         Me.GroupBox1.Controls.Add(Me.Label1)
-        Me.GroupBox1.Location = New System.Drawing.Point(3, 73)
+        Me.GroupBox1.Location = New System.Drawing.Point(3, 3)
         Me.GroupBox1.Name = "GroupBox1"
         Me.GroupBox1.Size = New System.Drawing.Size(325, 46)
         Me.GroupBox1.TabIndex = 3
@@ -178,7 +121,7 @@ Partial Class frmMain
         Me.nudThickness.Name = "nudThickness"
         Me.nudThickness.Size = New System.Drawing.Size(206, 20)
         Me.nudThickness.TabIndex = 1
-        Me.nudThickness.Value = New Decimal(New Integer() {1000, 0, 0, 0})
+        Me.nudThickness.Value = New Decimal(New Integer() {10, 0, 0, 0})
         '
         'Label1
         '
@@ -256,7 +199,7 @@ Partial Class frmMain
         '
         'MenuStrip1
         '
-        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFile})
+        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFile, Me.mnuTools})
         Me.MenuStrip1.Location = New System.Drawing.Point(0, 0)
         Me.MenuStrip1.Name = "MenuStrip1"
         Me.MenuStrip1.Size = New System.Drawing.Size(935, 24)
@@ -278,10 +221,10 @@ Partial Class frmMain
         '
         'mnuFileReload
         '
+        Me.mnuFileReload.Enabled = False
         Me.mnuFileReload.Name = "mnuFileReload"
         Me.mnuFileReload.Size = New System.Drawing.Size(152, 22)
         Me.mnuFileReload.Text = "&Reload..."
-        Me.mnuFileReload.Enabled = False
         '
         'ToolStripMenuItem2
         '
@@ -290,24 +233,24 @@ Partial Class frmMain
         '
         'mnuFileExport
         '
+        Me.mnuFileExport.Enabled = False
         Me.mnuFileExport.Name = "mnuFileExport"
         Me.mnuFileExport.Size = New System.Drawing.Size(152, 22)
         Me.mnuFileExport.Text = "&Export..."
-        Me.mnuFileExport.Enabled = False
         '
         'mnuFilePrint
         '
+        Me.mnuFilePrint.Enabled = False
         Me.mnuFilePrint.Name = "mnuFilePrint"
         Me.mnuFilePrint.Size = New System.Drawing.Size(152, 22)
         Me.mnuFilePrint.Text = "&Print..."
-        Me.mnuFilePrint.Enabled = False
         '
         'mnuFilePrintPreview
         '
+        Me.mnuFilePrintPreview.Enabled = False
         Me.mnuFilePrintPreview.Name = "mnuFilePrintPreview"
         Me.mnuFilePrintPreview.Size = New System.Drawing.Size(152, 22)
         Me.mnuFilePrintPreview.Text = "P&rint Preview..."
-        Me.mnuFilePrintPreview.Enabled = False
         '
         'ToolStripMenuItem1
         '
@@ -320,15 +263,47 @@ Partial Class frmMain
         Me.mnuFileExit.Size = New System.Drawing.Size(152, 22)
         Me.mnuFileExit.Text = "E&xit"
         '
+        'mnuTools
+        '
+        Me.mnuTools.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuToolsChangeUnits, Me.mnuToolsChangeUpAxis, Me.ToolStripMenuItem3, Me.mnuToolsPreferences})
+        Me.mnuTools.Name = "mnuTools"
+        Me.mnuTools.Size = New System.Drawing.Size(46, 20)
+        Me.mnuTools.Text = "&Tools"
+        '
+        'mnuToolsChangeUnits
+        '
+        Me.mnuToolsChangeUnits.Enabled = False
+        Me.mnuToolsChangeUnits.Name = "mnuToolsChangeUnits"
+        Me.mnuToolsChangeUnits.Size = New System.Drawing.Size(167, 22)
+        Me.mnuToolsChangeUnits.Text = "Change &Units..."
+        '
+        'mnuToolsChangeUpAxis
+        '
+        Me.mnuToolsChangeUpAxis.Enabled = False
+        Me.mnuToolsChangeUpAxis.Name = "mnuToolsChangeUpAxis"
+        Me.mnuToolsChangeUpAxis.Size = New System.Drawing.Size(167, 22)
+        Me.mnuToolsChangeUpAxis.Text = "Change Up &Axis..."
+        '
+        'ToolStripMenuItem3
+        '
+        Me.ToolStripMenuItem3.Name = "ToolStripMenuItem3"
+        Me.ToolStripMenuItem3.Size = New System.Drawing.Size(164, 6)
+        '
+        'mnuToolsPreferences
+        '
+        Me.mnuToolsPreferences.Name = "mnuToolsPreferences"
+        Me.mnuToolsPreferences.Size = New System.Drawing.Size(167, 22)
+        Me.mnuToolsPreferences.Text = "&Preferences..."
+        '
         'GroupBox2
         '
         Me.GroupBox2.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
             Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.GroupBox2.Controls.Add(Me.lbObjects)
-        Me.GroupBox2.Location = New System.Drawing.Point(3, 213)
+        Me.GroupBox2.Location = New System.Drawing.Point(3, 133)
         Me.GroupBox2.Name = "GroupBox2"
-        Me.GroupBox2.Size = New System.Drawing.Size(325, 268)
+        Me.GroupBox2.Size = New System.Drawing.Size(325, 348)
         Me.GroupBox2.TabIndex = 6
         Me.GroupBox2.TabStop = False
         Me.GroupBox2.Text = "Parts"
@@ -342,7 +317,7 @@ Partial Class frmMain
         Me.lbObjects.IntegralHeight = False
         Me.lbObjects.Location = New System.Drawing.Point(6, 19)
         Me.lbObjects.Name = "lbObjects"
-        Me.lbObjects.Size = New System.Drawing.Size(313, 243)
+        Me.lbObjects.Size = New System.Drawing.Size(313, 323)
         Me.lbObjects.TabIndex = 0
         '
         'StatusStrip1
@@ -357,7 +332,7 @@ Partial Class frmMain
         'tsslStatus
         '
         Me.tsslStatus.Name = "tsslStatus"
-        Me.tsslStatus.Size = New System.Drawing.Size(920, 17)
+        Me.tsslStatus.Size = New System.Drawing.Size(460, 17)
         Me.tsslStatus.Spring = True
         Me.tsslStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
         '
@@ -370,10 +345,10 @@ Partial Class frmMain
         'tsslFile
         '
         Me.tsslFile.Name = "tsslFile"
-        Me.tsslFile.Size = New System.Drawing.Size(920, 17)
+        Me.tsslFile.Size = New System.Drawing.Size(460, 17)
         Me.tsslFile.Spring = True
-        Me.tsslFile.TextAlign = System.Drawing.ContentAlignment.MiddleRight
         Me.tsslFile.Text = "No File Loaded"
+        Me.tsslFile.TextAlign = System.Drawing.ContentAlignment.MiddleRight
         '
         'Label3
         '
@@ -389,8 +364,9 @@ Partial Class frmMain
         Me.lblSlices.AutoSize = True
         Me.lblSlices.Location = New System.Drawing.Point(132, 16)
         Me.lblSlices.Name = "lblSlices"
-        Me.lblSlices.Size = New System.Drawing.Size(0, 13)
+        Me.lblSlices.Size = New System.Drawing.Size(13, 13)
         Me.lblSlices.TabIndex = 5
+        Me.lblSlices.Text = "0"
         '
         'Label4
         '
@@ -406,8 +382,9 @@ Partial Class frmMain
         Me.lblHeight.AutoSize = True
         Me.lblHeight.Location = New System.Drawing.Point(132, 29)
         Me.lblHeight.Name = "lblHeight"
-        Me.lblHeight.Size = New System.Drawing.Size(0, 13)
+        Me.lblHeight.Size = New System.Drawing.Size(13, 13)
         Me.lblHeight.TabIndex = 8
+        Me.lblHeight.Text = "0"
         '
         'SplitContainer1
         '
@@ -422,7 +399,6 @@ Partial Class frmMain
         Me.SplitContainer1.Panel1.Controls.Add(Me.GroupBox3)
         Me.SplitContainer1.Panel1.Controls.Add(Me.GroupBox1)
         Me.SplitContainer1.Panel1.Controls.Add(Me.GroupBox2)
-        Me.SplitContainer1.Panel1.Controls.Add(Me.modelSettingsGroupBox)
         '
         'SplitContainer1.Panel2
         '
@@ -444,9 +420,9 @@ Partial Class frmMain
         Me.GroupBox4.Controls.Add(Me.lblTotalWidth)
         Me.GroupBox4.Controls.Add(Me.Label6)
         Me.GroupBox4.Controls.Add(Me.lblTotalHeight)
-        Me.GroupBox4.Location = New System.Drawing.Point(3, 126)
+        Me.GroupBox4.Location = New System.Drawing.Point(3, 55)
         Me.GroupBox4.Name = "GroupBox4"
-        Me.GroupBox4.Size = New System.Drawing.Size(325, 81)
+        Me.GroupBox4.Size = New System.Drawing.Size(325, 72)
         Me.GroupBox4.TabIndex = 8
         Me.GroupBox4.TabStop = False
         Me.GroupBox4.Text = "Total Statistics"
@@ -456,8 +432,9 @@ Partial Class frmMain
         Me.lblTotalVolume.AutoSize = True
         Me.lblTotalVolume.Location = New System.Drawing.Point(132, 55)
         Me.lblTotalVolume.Name = "lblTotalVolume"
-        Me.lblTotalVolume.Size = New System.Drawing.Size(0, 13)
+        Me.lblTotalVolume.Size = New System.Drawing.Size(13, 13)
         Me.lblTotalVolume.TabIndex = 11
+        Me.lblTotalVolume.Text = "0"
         '
         'Label2
         '
@@ -482,8 +459,9 @@ Partial Class frmMain
         Me.lblTotalDepth.AutoSize = True
         Me.lblTotalDepth.Location = New System.Drawing.Point(132, 42)
         Me.lblTotalDepth.Name = "lblTotalDepth"
-        Me.lblTotalDepth.Size = New System.Drawing.Size(0, 13)
+        Me.lblTotalDepth.Size = New System.Drawing.Size(13, 13)
         Me.lblTotalDepth.TabIndex = 9
+        Me.lblTotalDepth.Text = "0"
         '
         'Label8
         '
@@ -499,8 +477,9 @@ Partial Class frmMain
         Me.lblTotalWidth.AutoSize = True
         Me.lblTotalWidth.Location = New System.Drawing.Point(132, 29)
         Me.lblTotalWidth.Name = "lblTotalWidth"
-        Me.lblTotalWidth.Size = New System.Drawing.Size(0, 13)
+        Me.lblTotalWidth.Size = New System.Drawing.Size(13, 13)
         Me.lblTotalWidth.TabIndex = 7
+        Me.lblTotalWidth.Text = "0"
         '
         'Label6
         '
@@ -516,8 +495,9 @@ Partial Class frmMain
         Me.lblTotalHeight.AutoSize = True
         Me.lblTotalHeight.Location = New System.Drawing.Point(132, 16)
         Me.lblTotalHeight.Name = "lblTotalHeight"
-        Me.lblTotalHeight.Size = New System.Drawing.Size(0, 13)
+        Me.lblTotalHeight.Size = New System.Drawing.Size(13, 13)
         Me.lblTotalHeight.TabIndex = 5
+        Me.lblTotalHeight.Text = "0"
         '
         'GroupBox3
         '
@@ -545,8 +525,9 @@ Partial Class frmMain
         Me.lblVolume.AutoSize = True
         Me.lblVolume.Location = New System.Drawing.Point(132, 68)
         Me.lblVolume.Name = "lblVolume"
-        Me.lblVolume.Size = New System.Drawing.Size(0, 13)
+        Me.lblVolume.Size = New System.Drawing.Size(13, 13)
         Me.lblVolume.TabIndex = 14
+        Me.lblVolume.Text = "0"
         '
         'Label13
         '
@@ -562,8 +543,9 @@ Partial Class frmMain
         Me.lblDepth.AutoSize = True
         Me.lblDepth.Location = New System.Drawing.Point(132, 55)
         Me.lblDepth.Name = "lblDepth"
-        Me.lblDepth.Size = New System.Drawing.Size(0, 13)
+        Me.lblDepth.Size = New System.Drawing.Size(13, 13)
         Me.lblDepth.TabIndex = 12
+        Me.lblDepth.Text = "0"
         '
         'Label11
         '
@@ -579,8 +561,9 @@ Partial Class frmMain
         Me.lblWidth.AutoSize = True
         Me.lblWidth.Location = New System.Drawing.Point(132, 42)
         Me.lblWidth.Name = "lblWidth"
-        Me.lblWidth.Size = New System.Drawing.Size(0, 13)
+        Me.lblWidth.Size = New System.Drawing.Size(13, 13)
         Me.lblWidth.TabIndex = 10
+        Me.lblWidth.Text = "0"
         '
         'Label7
         '
@@ -603,8 +586,6 @@ Partial Class frmMain
         Me.Name = "frmMain"
         Me.Text = "Slicer"
         CType(Me.tbSlice, System.ComponentModel.ISupportInitialize).EndInit()
-        Me.modelSettingsGroupBox.ResumeLayout(False)
-        Me.modelSettingsGroupBox.PerformLayout()
         Me.GroupBox1.ResumeLayout(False)
         Me.GroupBox1.PerformLayout()
         CType(Me.nudThickness, System.ComponentModel.ISupportInitialize).EndInit()
@@ -674,10 +655,9 @@ Partial Class frmMain
     Friend WithEvents Label11 As Label
     Friend WithEvents lblWidth As Label
     Friend WithEvents Label7 As Label
-    Friend WithEvents modelSettingsGroupBox As GroupBox
-    Friend WithEvents lblUpAxis As Label
-    Friend WithEvents yUpRadioButton As RadioButton
-    Friend WithEvents zUpRadioButton As RadioButton
-    Friend WithEvents lblUnits As Label
-    Friend WithEvents unitsComboBox As ComboBox
+    Friend WithEvents mnuTools As ToolStripMenuItem
+    Friend WithEvents mnuToolsChangeUnits As ToolStripMenuItem
+    Friend WithEvents ToolStripMenuItem3 As ToolStripSeparator
+    Friend WithEvents mnuToolsPreferences As ToolStripMenuItem
+    Friend WithEvents mnuToolsChangeUpAxis As ToolStripMenuItem
 End Class

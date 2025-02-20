@@ -91,18 +91,36 @@
     <Compile Include="Controls\MouseDragEventArgs.vb" />
     <Compile Include="Controls\Direct3D\Renderer.vb" />
     <Compile Include="Enums\Axis.vb" />
+    <Compile Include="Enums\DisplayUnit.vb" />
     <Compile Include="Enums\Unit.vb" />
-    <Compile Include="frmImport.Designer.vb">
+    <Compile Include="Forms\frmChangeUnits.Designer.vb">
+      <DependentUpon>frmChangeUnits.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmChangeUnits.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmChangeUpAxis.Designer.vb">
+      <DependentUpon>frmChangeUpAxis.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmChangeUpAxis.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmImport.Designer.vb">
       <DependentUpon>frmImport.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmImport.vb">
+    <Compile Include="Forms\frmImport.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmMain.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="frmMain.Designer.vb">
+    <Compile Include="Forms\frmMain.Designer.vb">
       <DependentUpon>frmMain.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmMain.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmPreferences.Designer.vb">
+      <DependentUpon>frmPreferences.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmPreferences.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Geometry\BoundingBox.vb" />
@@ -118,6 +136,7 @@
     <Compile Include="Model Data\GeometryTriangle.vb" />
     <Compile Include="Geometry\Vector2.vb" />
     <Compile Include="Geometry\Vector3.vb" />
+    <Compile Include="modGeneral.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -141,13 +160,23 @@
     <Compile Include="Processors\MesherXYZ.vb" />
     <Compile Include="Processors\SpaceTree3.vb" />
     <Compile Include="Processors\Slicer.vb" />
+    <Compile Include="SettingsContainer.vb" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="frmImport.resx">
+    <EmbeddedResource Include="Forms\frmChangeUnits.resx">
+      <DependentUpon>frmChangeUnits.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmChangeUpAxis.resx">
+      <DependentUpon>frmChangeUpAxis.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmImport.resx">
       <DependentUpon>frmImport.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmMain.resx">
+    <EmbeddedResource Include="Forms\frmMain.resx">
       <DependentUpon>frmMain.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmPreferences.resx">
+      <DependentUpon>frmPreferences.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
@@ -172,5 +201,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Controls\Direct3D\shader.fx" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

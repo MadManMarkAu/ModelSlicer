@@ -19,8 +19,7 @@ Public Class Geometry
     End Function
 
     Private _bounds As BoundingBox
-    Private _currUnit As Unit = Unit.Millimeter
-    Private _currUpAxis As Axis = Axis.Y
+    Private _upAxis As Axis = Axis.Y
 
     ''' <summary>
     ''' Describes the objects contained in the geometry data
@@ -28,7 +27,7 @@ Public Class Geometry
     Public ReadOnly Property Groups As New List(Of GeometryTriangleGroup)
 
     ''' <summary>
-    ''' Returns the axis-aligned bounding box of this geometry data
+    ''' Returns the axis-aligned bounding box (AABB) of this geometry data
     ''' </summary>
     Public ReadOnly Property Bounds As BoundingBox
         Get
@@ -36,33 +35,37 @@ Public Class Geometry
         End Get
     End Property
 
-    Public Sub ChangeScale(newUnit As Unit)
-        Dim scale As Single =
-            {   'MM,    CM,    M,      IN,    FT
-                {1, 10, 1000, 25.4, 304.8},'MM
-                {0.1, 1, 100, 2.54, 30.48},'CM
-                {0.001, 0.01, 1, 0.025, 0.305},'M
-                {0.039, 0.394, 39.37, 1, 12},'IN
-                {0.003, 0.033, 3.281, 0.083, 1} 'FT
-            }(_currUnit, newUnit)
+    ''' <summary>
+    ''' Defines what units the vertex values are expressed in. Affects sizing when outputting.
+    ''' </summary>
+    Public Property Units As Unit
 
-        For i As Integer = 0 To Groups.Count - 1
-            Groups(i).Scale(scale)
-        Next i
+    Public ReadOnly Property UpAxis As Axis
+        Get
+            Return _upAxis
+        End Get
+    End Property
 
-        _currUnit = newUnit
-    End Sub
+    'Public Sub ChangeScale(newUnit As Unit)
+    '    Dim scale As Single = GetUnitConversionRatio(_units, newUnit)
+
+    '    For i As Integer = 0 To Groups.Count - 1
+    '        Groups(i).Scale(scale)
+    '    Next i
+
+    '    _units = newUnit
+    'End Sub
 
     Public Sub ChangeUpAxis(newUpAxis As Axis)
         Dim oldUp As Vector3
         Dim newUp As Vector3
         Dim quat As Quaternion
 
-        If _currUpAxis = newUpAxis Then
+        If _upAxis = newUpAxis Then
             Return
         End If
 
-        Select Case _currUpAxis
+        Select Case _upAxis
             Case Axis.X
                 oldUp = New Vector3(1, 0, 0)
 
@@ -92,7 +95,7 @@ Public Class Geometry
             Groups(i).ApplyQuaternion(quat)
         Next
 
-        _currUpAxis = newUpAxis
+        _upAxis = newUpAxis
     End Sub
 
     ''' <summary>
@@ -201,10 +204,10 @@ Public Class Geometry
     ''' Loads a Wavefront OBJ file (*.obj) from a file.
     ''' </summary>
     ''' <param name="fileName">The obj file to load.</param>
-    ''' <param name="unit">The units to convert the model file to. The assumption is that model units are expressed as millimeters.</param>
+    ''' <param name="units">The units to convert the model file to. The assumption is that model units are expressed as millimeters.</param>
     ''' <param name="upAxis">If the model is z up or y up.</param>
     ''' <returns>A <see cref="Geometry"/> object describing the model.</returns>
-    Public Shared Function LoadWavefrontObj(fileName As String, unit As Unit, upAxis As Axis) As Geometry
+    Public Shared Function LoadWavefrontObj(fileName As String, units As Unit, upAxis As Axis) As Geometry
         Dim output As New Geometry
 
         Dim line As String
@@ -272,7 +275,7 @@ Public Class Geometry
             End Using
         End Using
 
-        output.ChangeScale(unit)
+        output.Units = units
         output.ChangeUpAxis(upAxis)
         output.UpdateBounds()
 
