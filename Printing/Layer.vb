@@ -12,7 +12,7 @@
     End Property
 
     Public Sub New(topOutlineValue As GeometryLineGroup, bottomOutlineValue As GeometryLineGroup, contentsValue As GeometryTriangleGroup)
-        topOutlineValue = topOutlineValue
+        TopOutline = topOutlineValue
         BottomOutline = bottomOutlineValue
         Contents = contentsValue
 

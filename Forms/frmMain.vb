@@ -1,5 +1,4 @@
-﻿Imports System.ComponentModel
-Imports System.IO
+﻿Imports System.IO
 Imports System.Xml
 
 Public Class frmMain
