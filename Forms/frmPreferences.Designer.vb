@@ -64,6 +64,7 @@ Partial Class frmPreferences
         '
         Me.cmbDisplayUnits.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.cmbDisplayUnits.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.cmbDisplayUnits.FormattingEnabled = True
         Me.cmbDisplayUnits.Items.AddRange(New Object() {"Millimeters", "Centimeters", "Meters", "Fractional Inches", "Decimal Inches", "Fractional Feet Inches", "Decimal Feet Inches"})
         Me.cmbDisplayUnits.Location = New System.Drawing.Point(89, 12)

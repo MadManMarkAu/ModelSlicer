@@ -2,18 +2,21 @@
 Imports System.Text
 Imports System.Xml.Serialization
 
+<Serializable>
+<XmlRoot("Settings")>
 Public Class SettingsContainer
     Private Const SETTINGS_PATH As String = "MadManMarkAu\ModelSlicer"
 
-    Private Shared _instance As SettingsContainer
+    Private Shared __instance As SettingsContainer
+    Private Shared __encoding As New UTF8Encoding(False)
 
     Public Shared ReadOnly Property Instance As SettingsContainer
         Get
-            If _instance Is Nothing Then
-                _instance = Load()
+            If __instance Is Nothing Then
+                __instance = Load()
             End If
 
-            Return _instance
+            Return __instance
         End Get
     End Property
 
@@ -28,6 +31,7 @@ Public Class SettingsContainer
         Dim sb As StringBuilder
         Dim serializer As XmlSerializer
         Dim namespaces As XmlSerializerNamespaces
+        Dim settingsFile As String
 
         ' We write to a temp file first, because in very rare instances,
         ' writing directly to the settings file can corrupt the file,
@@ -46,8 +50,14 @@ Public Class SettingsContainer
             serializer.Serialize(writer, Me, namespaces)
         End Using
 
-        File.WriteAllText(tempFile, sb.ToString())
-        File.Copy(tempFile, GetSettingsFile(), True)
+        settingsFile = GetSettingsFile()
+
+        If Not Directory.Exists(Path.GetDirectoryName(settingsFile)) Then
+            Directory.CreateDirectory(Path.GetDirectoryName(settingsFile))
+        End If
+
+        File.WriteAllText(tempFile, sb.ToString(), __encoding)
+        File.Copy(tempFile, settingsFile, True)
         File.Delete(tempFile)
     End Sub
 
@@ -62,10 +72,12 @@ Public Class SettingsContainer
             ' Load settings XML file.
             Try
                 Using stream As New FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read)
-                    serializer = New XmlSerializer(GetType(SettingsContainer))
-                    output = serializer.Deserialize(stream)
+                    Using reader As New StreamReader(stream, __encoding)
+                        serializer = New XmlSerializer(GetType(SettingsContainer))
+                        output = serializer.Deserialize(reader)
+                    End Using
                 End Using
-            Catch
+            Catch ex As Exception
                 ' Settings failed to load. Corrupt settings file? Restore defaults.
                 output = New SettingsContainer()
             End Try
@@ -77,6 +89,6 @@ Public Class SettingsContainer
     End Function
 
     Private Shared Function GetSettingsFile() As String
-        Return Path.Combine(Application.UserAppDataPath, SETTINGS_PATH, "settings.xml")
+        Return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), SETTINGS_PATH, "settings.xml")
     End Function
 End Class

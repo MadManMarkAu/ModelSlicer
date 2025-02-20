@@ -74,6 +74,7 @@ Public Class frmMain
                 If changeUnits.ShowDialog(Me) = DialogResult.OK Then
                     LoadModelStats()
                     SetSelectedObject(lbObjects.SelectedItem)
+                    UpdateTrackBar()
                 End If
             End Using
         End If
@@ -86,6 +87,7 @@ Public Class frmMain
                 If changeUpAxis.ShowDialog(Me) = DialogResult.OK Then
                     LoadModelStats()
                     SetSelectedObject(lbObjects.SelectedItem)
+                    UpdateTrackBar()
                 End If
             End Using
         End If
@@ -96,11 +98,6 @@ Public Class frmMain
     End Sub
 
     Private Sub nudThickness_ValueChanged(sender As Object, e As EventArgs) Handles nudThickness.ValueChanged
-        Call UpdateTrackBar()
-        Call UpdateDisplay()
-    End Sub
-
-    Private Sub nudHeight_ValueChanged(sender As Object, e As EventArgs)
         Call UpdateTrackBar()
         Call UpdateDisplay()
     End Sub
@@ -212,22 +209,27 @@ Public Class frmMain
     End Sub
 
     Private Sub LoadModelStats()
+        Dim units As Unit
         Dim totalHeight As Single
         Dim totalWidth As Single
         Dim totalDepth As Single
         Dim totalArea As Single
 
+        units = GetUnitFromDisplayUnit(SettingsContainer.Instance.DisplayUnits)
+
         totalHeight = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Height).Sum()
         totalWidth = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Width).Sum()
         totalDepth = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select gtgPart.Bounds.Depth).Sum()
-        totalArea = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select ConvertUnit(gtgPart.Bounds.Height, _geometry.Units, Unit.Millimeter) *
-                                                                                   ConvertUnit(gtgPart.Bounds.Width, _geometry.Units, Unit.Millimeter) *
-                                                                                   ConvertUnit(gtgPart.Bounds.Depth, _geometry.Units, Unit.Millimeter)).Sum() / 1000000000
+        totalArea = (From gtgPart As GeometryTriangleGroup In _geometry.Groups Select
+                                                                                   ConvertUnit(gtgPart.Bounds.Height, _geometry.Units, units) *
+                                                                                   ConvertUnit(gtgPart.Bounds.Width, _geometry.Units, units) *
+                                                                                   ConvertUnit(gtgPart.Bounds.Depth, _geometry.Units, units)).Sum()
+
 
         lblTotalHeight.Text = FormatUnit(totalHeight, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
         lblTotalWidth.Text = FormatUnit(totalWidth, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
         lblTotalDepth.Text = FormatUnit(totalDepth, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
-        lblTotalVolume.Text = totalArea.ToString("#,##0.000") & " M³"
+        lblTotalVolume.Text = FormatUnit(totalArea, SettingsContainer.Instance.DisplayUnits) & "³"
     End Sub
 
     Private Sub ReloadModelFile()
@@ -244,9 +246,6 @@ Public Class frmMain
 
                 LoadModelStats()
 
-                tsslFile.Text = fileName
-
-                tsslFile.Text = fileName
                 _fileName = fileName
 
                 mnuFileReload.Enabled = True
@@ -264,6 +263,7 @@ Public Class frmMain
     End Sub
 
     Private Sub SetSelectedObject(gtgObject As GeometryTriangleGroup)
+        Dim units As Unit
         Dim modelMatrix As Matrix
 
         _selectedObject = gtgObject
@@ -276,17 +276,19 @@ Public Class frmMain
             mdBottom.ModelMatrix = modelMatrix
             mdIso.ModelMatrix = modelMatrix * Matrix.Scale(1 / 1.212)
 
+            units = GetUnitFromDisplayUnit(SettingsContainer.Instance.DisplayUnits)
+
             lblHeight.Text = FormatUnit(_selectedObject.Bounds.Height, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
             lblWidth.Text = FormatUnit(_selectedObject.Bounds.Width, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
             lblDepth.Text = FormatUnit(_selectedObject.Bounds.Depth, _geometry.Units, SettingsContainer.Instance.DisplayUnits)
-            lblVolume.Text = (ConvertUnit(_selectedObject.Bounds.Height, _geometry.Units, Unit.Millimeter) *
-                ConvertUnit(_selectedObject.Bounds.Width, _geometry.Units, Unit.Millimeter) *
-                ConvertUnit(_selectedObject.Bounds.Depth, _geometry.Units, Unit.Millimeter) / 1000000000).ToString("#,##0.000") & " M³"
+            lblVolume.Text = FormatUnit(ConvertUnit(_selectedObject.Bounds.Height, _geometry.Units, units) *
+                ConvertUnit(_selectedObject.Bounds.Width, _geometry.Units, units) *
+                ConvertUnit(_selectedObject.Bounds.Depth, _geometry.Units, units), SettingsContainer.Instance.DisplayUnits) & "³"
         Else
-            lblHeight.Text = String.Empty
-            lblWidth.Text = String.Empty
-            lblDepth.Text = String.Empty
-            lblVolume.Text = String.Empty
+            lblHeight.Text = "-"
+            lblWidth.Text = "-"
+            lblDepth.Text = "-"
+            lblVolume.Text = "-"
         End If
 
         Call UpdateTrackBar()
@@ -295,9 +297,10 @@ Public Class frmMain
 
     Private Sub UpdateTrackBar()
         If _selectedObject IsNot Nothing Then
-            Dim intNumSlices As Integer = Math.Ceiling(_selectedObject.Bounds.Height / nudThickness.Value)
-            tbSlice.Maximum = intNumSlices
-            lblSlices.Text = intNumSlices
+            Dim modelHeight As Single = ConvertUnit(_selectedObject.Bounds.Height, _geometry.Units, Unit.Millimeter)
+            Dim numSlices As Integer = Math.Ceiling(modelHeight / nudThickness.Value)
+            tbSlice.Maximum = numSlices
+            lblSlices.Text = numSlices
         Else
             tbSlice.Maximum = 0
             lblSlices.Text = String.Empty
@@ -305,6 +308,7 @@ Public Class frmMain
     End Sub
 
     Private Sub UpdateDisplay()
+        Dim thickness As Single
         Dim sliceStart As Vector3
         Dim sliceEnd As Vector3
         Dim sliceDir As Vector3
@@ -319,8 +323,10 @@ Public Class frmMain
         Dim silhouette As GeometryLineGroup
 
         If _selectedObject IsNot Nothing Then
-            sliceStart = New Vector3(0, _selectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * (tbSlice.Value + 1), 0)
-            sliceEnd = New Vector3(0, _selectedObject.Bounds.Minimum.Y + CSng(nudThickness.Value) * tbSlice.Value, 0)
+            thickness = ConvertUnit(nudThickness.Value, Unit.Millimeter, _geometry.Units)
+
+            sliceStart = New Vector3(0, _selectedObject.Bounds.Minimum.Y + thickness * (tbSlice.Value + 1), 0)
+            sliceEnd = New Vector3(0, _selectedObject.Bounds.Minimum.Y + thickness * tbSlice.Value, 0)
             sliceDir = New Vector3(0, -1, 0)
 
             slice = Slicer.ExtractBetweenPlanes(_selectedObject, sliceStart, sliceEnd, sliceDir)

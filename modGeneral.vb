@@ -10,7 +10,35 @@
         }
 
     ''' <summary>
-    ''' Formats a unit value for displaying to the user.
+    ''' Takes in a <see cref="DisplayUnit"/> value and converts it to the <see cref="Unit"/> it represents.
+    ''' </summary>
+    ''' <param name="displayUnit">The <see cref="DisplayUnit"/> to convert from.</param>
+    ''' <returns>The <see cref="Unit"/> that describes the units used for the specified <see cref="DisplayUnit"/></returns>
+    Public Function GetUnitFromDisplayUnit(displayUnit As DisplayUnit) As Unit
+        Select Case displayUnit
+            Case DisplayUnit.Millimeter
+                Return Unit.Millimeter
+
+            Case DisplayUnit.Centimeter
+                Return Unit.Centimeter
+
+            Case DisplayUnit.Meter
+                Return Unit.Meter
+
+            Case DisplayUnit.InchesDecimal, DisplayUnit.InchesFractional
+                Return Unit.Inch
+
+            Case DisplayUnit.FeetInchesDecimal, DisplayUnit.FeetInchesFractional
+                Return Unit.Inch
+
+            Case Else
+                Return Unit.Millimeter
+
+        End Select
+    End Function
+
+    ''' <summary>
+    ''' Converts a value from one unit to another, then formats a unit value for displaying to the user.
     ''' </summary>
     ''' <param name="value">The value to convert for display, express in <paramref name="sourceUnit"/> units.</param>
     ''' <param name="sourceUnit">The units that <paramref name="value"/> is expressed in.</param>
@@ -20,47 +48,41 @@
         Dim toUnit As Unit
         Dim convertedValue As Single
 
-        Select Case display
-            Case DisplayUnit.Millimeter
-                toUnit = Unit.Millimeter
-
-            Case DisplayUnit.Centimeter
-                toUnit = Unit.Centimeter
-
-            Case DisplayUnit.Meter
-                toUnit = Unit.Meter
-
-            Case DisplayUnit.InchesDecimal, DisplayUnit.InchesFractional
-                toUnit = Unit.Inch
-
-            Case DisplayUnit.FeetInchesDecimal, DisplayUnit.FeetInchesFractional
-                toUnit = Unit.Inch
-
-        End Select
+        toUnit = GetUnitFromDisplayUnit(display)
 
         convertedValue = ConvertUnit(value, sourceUnit, toUnit)
 
+        Return FormatUnit(convertedValue, display)
+    End Function
+
+    ''' <summary>
+    ''' Formats a unit value for displaying to the user.
+    ''' </summary>
+    ''' <param name="value">The value to convert for display.</param>
+    ''' <param name="display">The units to display values in.</param>
+    ''' <returns>A string representing the converted and formatted units.</returns>
+    Public Function FormatUnit(value As Single, display As DisplayUnit) As String
         Select Case display
             Case DisplayUnit.Millimeter
-                Return $"{convertedValue:N1} mm"
+                Return $"{value:N1} mm"
 
             Case DisplayUnit.Centimeter
-                Return $"{convertedValue:N2} cm"
+                Return $"{value:N2} cm"
 
             Case DisplayUnit.Meter
-                Return $"{convertedValue:N3} M"
+                Return $"{value:N3} M"
 
             Case DisplayUnit.InchesDecimal
-                Return $"{convertedValue:N3} """
+                Return $"{value:N3} """
 
             Case DisplayUnit.InchesFractional
-                Return FormatInchFraction(convertedValue, 64) ' 64ths resolution
+                Return FormatInchFraction(value, 64) ' 64ths resolution
 
             Case DisplayUnit.FeetInchesDecimal
-                Return FormatFeetInchDecimal(convertedValue)
+                Return FormatFeetInchDecimal(value)
 
             Case DisplayUnit.FeetInchesFractional
-                Return FormatFeetInchFraction(convertedValue, 64) ' 64ths resolution
+                Return FormatFeetInchFraction(value, 64) ' 64ths resolution
 
             Case Else
                 Return "Unknown unit"
