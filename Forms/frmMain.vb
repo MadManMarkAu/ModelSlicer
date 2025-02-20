@@ -5,8 +5,6 @@ Imports System.Xml
 Public Class frmMain
     Private _geometry As Geometry
     Private _selectedObject As GeometryTriangleGroup
-    Private WithEvents _slicer As New BackgroundWorker With {.WorkerReportsProgress = True}
-    Private _layers As List(Of Layer)
     Private _fileName As String
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -31,25 +29,35 @@ Public Class frmMain
     End Sub
 
     Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
-        tsslStatus.Text = "Slicing..."
-        mnuFilePrint.Enabled = False
-        mnuFilePrintPreview.Enabled = False
-        tspbProgress.Visible = True
+        If _selectedObject IsNot Nothing Then
+            tsslStatus.Text = "Slicing..."
+            mnuFilePrintPreview.Enabled = False
 
-        _slicer.RunWorkerAsync(New SliceArgs(_selectedObject, nudThickness.Value, Color.Red, Color.Blue, Color.LightGray, False))
-    End Sub
+            Using slicer As New frmSlicer
+                slicer.TriangleGroup = _selectedObject
+                slicer.Thickness = nudThickness.Value
 
-    Private Sub mnuFilePrint_Click(sender As Object, e As EventArgs) Handles mnuFilePrint.Click
-
+                If slicer.ShowDialog(Me) = DialogResult.OK Then
+                    ExportSlices(slicer.Result)
+                End If
+            End Using
+        End If
     End Sub
 
     Private Sub mnuFilePrintPreview_Click(sender As Object, e As EventArgs) Handles mnuFilePrintPreview.Click
-        tsslStatus.Text = "Slicing..."
-        mnuFilePrint.Enabled = False
-        mnuFilePrintPreview.Enabled = False
-        tspbProgress.Visible = True
+        If _selectedObject IsNot Nothing Then
+            tsslStatus.Text = "Slicing..."
+            mnuFilePrintPreview.Enabled = False
 
-        _slicer.RunWorkerAsync(New SliceArgs(_selectedObject, nudThickness.Value, Color.Red, Color.Blue, Color.LightGray, True))
+            Using slicer As New frmSlicer
+                slicer.TriangleGroup = _selectedObject
+                slicer.Thickness = nudThickness.Value
+
+                If slicer.ShowDialog(Me) = DialogResult.OK Then
+                    PrintSlices(slicer.Result)
+                End If
+            End Using
+        End If
     End Sub
 
     Private Sub mnuFileExit_Click(sender As Object, e As EventArgs) Handles mnuFileExit.Click
@@ -106,45 +114,6 @@ Public Class frmMain
         Call UpdateDisplay()
     End Sub
 
-    Private Sub m_bwSlicer_DoWork(sender As Object, e As DoWorkEventArgs) Handles _slicer.DoWork
-        Dim args As SliceArgs = DirectCast(e.Argument, SliceArgs)
-        Dim output As New List(Of Layer)
-        Dim yStart As Single
-        Dim startPlanePoint As Vector3
-        Dim endPlanePoint As Vector3
-        Dim planeNormal As Vector3
-        Dim sliceIndex As Integer
-        Dim numSlices As Integer
-
-        yStart = args.Section.Bounds.Minimum.Y
-        planeNormal = New Vector3(0, 1, 0)
-
-        sliceIndex = 0
-        numSlices = Math.Ceiling(args.Section.Bounds.Height / args.SliceSize)
-
-        While yStart < args.Section.Bounds.Maximum.Y
-            _slicer.ReportProgress(0, New SliceProgress(sliceIndex, numSlices))
-
-            startPlanePoint = New Vector3(0, yStart, 0)
-            endPlanePoint = New Vector3(0, yStart + args.SliceSize, 0)
-
-            output.Add(Slicer.Slice(_selectedObject, startPlanePoint, endPlanePoint, planeNormal, args.TopColor, args.BottomColor, args.ContentColor))
-
-            yStart += args.SliceSize
-            sliceIndex += 1
-        End While
-
-        _layers = output
-        e.Result = args.Print
-    End Sub
-
-    Private Sub m_bwSlicer_ProgressChanged(sender As Object, e As ProgressChangedEventArgs) Handles _slicer.ProgressChanged
-        Dim progress As SliceProgress = DirectCast(e.UserState, SliceProgress)
-
-        tspbProgress.Maximum = progress.NumSlices
-        tspbProgress.Value = progress.SliceIndex
-    End Sub
-
     Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, xMin As Single, zMin As Single, layerName As String) As XmlElement
         Dim layer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
 
@@ -162,50 +131,40 @@ Public Class frmMain
         Return layer
     End Function
 
-    Private Sub m_bwSlicer_RunWorkerCompleted(sender As Object, e As RunWorkerCompletedEventArgs) Handles _slicer.RunWorkerCompleted
-        Dim printBool As Boolean = DirectCast(e.Result, Boolean)
+    Private Sub PrintSlices(layers As List(Of Layer))
+        Using preview As New PrintPreviewDialog
+            Using llpdPrint As New LayerListPrintDocument(layers)
+                preview.Document = llpdPrint
 
-        tsslStatus.Text = String.Empty
-        tspbProgress.Value = 0
-        tspbProgress.Visible = False
-        mnuFilePrint.Enabled = True
-        mnuFilePrintPreview.Enabled = True
+                preview.ShowDialog(Me)
+            End Using
+        End Using
+    End Sub
 
-        If e.Error Is Nothing Then
-            If printBool Then
-                Using preview As New PrintPreviewDialog
-                    Using llpdPrint As New LayerListPrintDocument(_layers)
-                        preview.Document = llpdPrint
+    Private Sub ExportSlices(layers As List(Of Layer))
+        Using saveDialog As New SaveFileDialog
+            saveDialog.FileName = "Select the folder to save SVG files"
+            If saveDialog.ShowDialog() = DialogResult.OK Then
+                Dim selectedPath As String = Path.GetDirectoryName(saveDialog.FileName)
 
-                        preview.ShowDialog(Me)
-                    End Using
-                End Using
-            Else
-                Using saveDialog As New SaveFileDialog
-                    saveDialog.FileName = "Select the folder to save SVG files"
-                    If saveDialog.ShowDialog() = DialogResult.OK Then
-                        Dim selectedPath As String = Path.GetDirectoryName(saveDialog.FileName)
+                For Each layer As Layer In layers
+                    Dim xmlDoc As New XmlDocument()
+                    Dim svgRoot As XmlElement = xmlDoc.CreateElement("svg", "http://www.w3.org/2000/svg")
+                    xmlDoc.AppendChild(svgRoot)
 
-                        For Each layer As Layer In _layers
-                            Dim xmlDoc As New XmlDocument()
-                            Dim svgRoot As XmlElement = xmlDoc.CreateElement("svg", "http://www.w3.org/2000/svg")
-                            xmlDoc.AppendChild(svgRoot)
+                    Dim xMin As Single = layer.Bounds.Minimum.X
+                    Dim zMin As Single = layer.Bounds.Minimum.Z
 
-                            Dim xMin As Single = layer.Bounds.Minimum.X
-                            Dim zMin As Single = layer.Bounds.Minimum.Z
+                    Dim svgLayerTop As XmlElement = ConvertLayerToSvg(xmlDoc, layer.TopOutline, xMin, zMin, "top")
+                    svgRoot.AppendChild(svgLayerTop)
 
-                            Dim svgLayerTop As XmlElement = ConvertLayerToSvg(xmlDoc, layer.TopOutline, xMin, zMin, "top")
-                            svgRoot.AppendChild(svgLayerTop)
+                    Dim svgLayerBottom As XmlElement = ConvertLayerToSvg(xmlDoc, layer.BottomOutline, xMin, zMin, "bottom")
+                    svgRoot.AppendChild(svgLayerBottom)
 
-                            Dim svgLayerBottom As XmlElement = ConvertLayerToSvg(xmlDoc, layer.BottomOutline, xMin, zMin, "bottom")
-                            svgRoot.AppendChild(svgLayerBottom)
-
-                            xmlDoc.Save(Path.Combine(selectedPath, "layer" & _layers.IndexOf(layer) & ".svg"))
-                        Next
-                    End If
-                End Using
+                    xmlDoc.Save(Path.Combine(selectedPath, "layer" & layers.IndexOf(layer) & ".svg"))
+                Next
             End If
-        End If
+        End Using
     End Sub
 
     Private Sub LoadModelStats()
@@ -250,7 +209,6 @@ Public Class frmMain
 
                 mnuFileReload.Enabled = True
                 mnuFileExport.Enabled = True
-                mnuFilePrint.Enabled = True
                 mnuFilePrintPreview.Enabled = True
                 mnuToolsChangeUnits.Enabled = True
                 mnuToolsChangeUpAxis.Enabled = True
