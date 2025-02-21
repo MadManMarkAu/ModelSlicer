@@ -26,6 +26,14 @@ Public Class frmMain
         End Using
     End Sub
 
+
+    Private Sub mnuFileRefreshModel_Click(sender As Object, e As EventArgs) Handles mnuFileRefreshModel.Click
+        If _geometry IsNot Nothing AndAlso File.Exists(_fileName) Then
+            RefreshModelFile()
+        End If
+    End Sub
+
+
     Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
         If _selectedObject IsNot Nothing Then
             tsslStatus.Text = "Slicing..."
@@ -250,6 +258,7 @@ Public Class frmMain
 
                 _fileName = fileName
 
+                mnuFileRefreshModel.Enabled = True
                 mnuFileExport.Enabled = True
                 mnuFilePrintPreview.Enabled = True
                 mnuToolsChangeUnits.Enabled = True
@@ -260,6 +269,14 @@ Public Class frmMain
                 lbObjects.DataSource = _geometry.Groups
             End If
         End Using
+    End Sub
+
+    Private Sub RefreshModelFile()
+        _geometry = Geometry.LoadWavefrontObj(_fileName, _geometry.Units, _geometry.UpAxis)
+
+        LoadModelStats()
+
+        lbObjects.DataSource = _geometry.Groups
     End Sub
 
     Private Sub SetSelectedObject(gtgObject As GeometryTriangleGroup)

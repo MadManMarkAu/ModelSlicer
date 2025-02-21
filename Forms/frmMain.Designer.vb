@@ -27,10 +27,6 @@ Partial Class frmMain
         Me.nudThickness = New System.Windows.Forms.NumericUpDown()
         Me.Label1 = New System.Windows.Forms.Label()
         Me.TableLayoutPanel1 = New System.Windows.Forms.TableLayoutPanel()
-        Me.mdFront = New ModelSlicer.ModelDisplay()
-        Me.mdRight = New ModelSlicer.ModelDisplay()
-        Me.mdBottom = New ModelSlicer.ModelDisplay()
-        Me.mdIso = New ModelSlicer.ModelDisplay()
         Me.MenuStrip1 = New System.Windows.Forms.MenuStrip()
         Me.mnuFile = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFileOpen = New System.Windows.Forms.ToolStripMenuItem()
@@ -69,6 +65,11 @@ Partial Class frmMain
         Me.Label11 = New System.Windows.Forms.Label()
         Me.lblWidth = New System.Windows.Forms.Label()
         Me.Label7 = New System.Windows.Forms.Label()
+        Me.mdFront = New ModelSlicer.ModelDisplay()
+        Me.mdRight = New ModelSlicer.ModelDisplay()
+        Me.mdBottom = New ModelSlicer.ModelDisplay()
+        Me.mdIso = New ModelSlicer.ModelDisplay()
+        Me.mnuFileRefreshModel = New System.Windows.Forms.ToolStripMenuItem()
         CType(Me.tbSlice, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.GroupBox1.SuspendLayout()
         CType(Me.nudThickness, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -148,51 +149,6 @@ Partial Class frmMain
         Me.TableLayoutPanel1.Size = New System.Drawing.Size(594, 526)
         Me.TableLayoutPanel1.TabIndex = 4
         '
-        'mdFront
-        '
-        Me.mdFront.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.mdFront.ForeColor = System.Drawing.Color.Black
-        Me.mdFront.Location = New System.Drawing.Point(0, 0)
-        Me.mdFront.Margin = New System.Windows.Forms.Padding(0, 0, 3, 3)
-        Me.mdFront.Name = "mdFront"
-        Me.mdFront.Size = New System.Drawing.Size(293, 260)
-        Me.mdFront.TabIndex = 0
-        Me.mdFront.Text = "ModelDisplay1"
-        '
-        'mdRight
-        '
-        Me.mdRight.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.mdRight.ForeColor = System.Drawing.Color.Red
-        Me.mdRight.Location = New System.Drawing.Point(299, 0)
-        Me.mdRight.Margin = New System.Windows.Forms.Padding(3, 0, 0, 3)
-        Me.mdRight.Name = "mdRight"
-        Me.mdRight.Size = New System.Drawing.Size(295, 260)
-        Me.mdRight.TabIndex = 1
-        Me.mdRight.Text = "ModelDisplay1"
-        '
-        'mdBottom
-        '
-        Me.mdBottom.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.mdBottom.ForeColor = System.Drawing.Color.Red
-        Me.mdBottom.Location = New System.Drawing.Point(0, 266)
-        Me.mdBottom.Margin = New System.Windows.Forms.Padding(0, 3, 3, 0)
-        Me.mdBottom.Name = "mdBottom"
-        Me.mdBottom.Size = New System.Drawing.Size(293, 260)
-        Me.mdBottom.TabIndex = 2
-        Me.mdBottom.Text = "ModelDisplay1"
-        '
-        'mdIso
-        '
-        Me.mdIso.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.mdIso.EnableRotation = True
-        Me.mdIso.ForeColor = System.Drawing.Color.Red
-        Me.mdIso.Location = New System.Drawing.Point(299, 266)
-        Me.mdIso.Margin = New System.Windows.Forms.Padding(3, 3, 0, 0)
-        Me.mdIso.Name = "mdIso"
-        Me.mdIso.Size = New System.Drawing.Size(295, 260)
-        Me.mdIso.TabIndex = 3
-        Me.mdIso.Text = "ModelDisplay1"
-        '
         'MenuStrip1
         '
         Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFile, Me.mnuTools})
@@ -204,7 +160,7 @@ Partial Class frmMain
         '
         'mnuFile
         '
-        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.ToolStripMenuItem2, Me.mnuFileExport, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
+        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.mnuFileRefreshModel, Me.ToolStripMenuItem2, Me.mnuFileExport, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
         Me.mnuFile.Name = "mnuFile"
         Me.mnuFile.Size = New System.Drawing.Size(37, 20)
         Me.mnuFile.Text = "&File"
@@ -543,6 +499,58 @@ Partial Class frmMain
         Me.Label7.TabIndex = 9
         Me.Label7.Text = "Bounding Width:"
         '
+        'mdFront
+        '
+        Me.mdFront.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.mdFront.ForeColor = System.Drawing.Color.Black
+        Me.mdFront.Location = New System.Drawing.Point(0, 0)
+        Me.mdFront.Margin = New System.Windows.Forms.Padding(0, 0, 3, 3)
+        Me.mdFront.Name = "mdFront"
+        Me.mdFront.Size = New System.Drawing.Size(293, 260)
+        Me.mdFront.TabIndex = 0
+        Me.mdFront.Text = "ModelDisplay1"
+        '
+        'mdRight
+        '
+        Me.mdRight.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.mdRight.ForeColor = System.Drawing.Color.Red
+        Me.mdRight.Location = New System.Drawing.Point(299, 0)
+        Me.mdRight.Margin = New System.Windows.Forms.Padding(3, 0, 0, 3)
+        Me.mdRight.Name = "mdRight"
+        Me.mdRight.Size = New System.Drawing.Size(295, 260)
+        Me.mdRight.TabIndex = 1
+        Me.mdRight.Text = "ModelDisplay1"
+        '
+        'mdBottom
+        '
+        Me.mdBottom.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.mdBottom.ForeColor = System.Drawing.Color.Red
+        Me.mdBottom.Location = New System.Drawing.Point(0, 266)
+        Me.mdBottom.Margin = New System.Windows.Forms.Padding(0, 3, 3, 0)
+        Me.mdBottom.Name = "mdBottom"
+        Me.mdBottom.Size = New System.Drawing.Size(293, 260)
+        Me.mdBottom.TabIndex = 2
+        Me.mdBottom.Text = "ModelDisplay1"
+        '
+        'mdIso
+        '
+        Me.mdIso.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.mdIso.EnableRotation = True
+        Me.mdIso.ForeColor = System.Drawing.Color.Red
+        Me.mdIso.Location = New System.Drawing.Point(299, 266)
+        Me.mdIso.Margin = New System.Windows.Forms.Padding(3, 3, 0, 0)
+        Me.mdIso.Name = "mdIso"
+        Me.mdIso.Size = New System.Drawing.Size(295, 260)
+        Me.mdIso.TabIndex = 3
+        Me.mdIso.Text = "ModelDisplay1"
+        '
+        'mnuFileRefreshModel
+        '
+        Me.mnuFileRefreshModel.Enabled = False
+        Me.mnuFileRefreshModel.Name = "mnuFileRefreshModel"
+        Me.mnuFileRefreshModel.Size = New System.Drawing.Size(180, 22)
+        Me.mnuFileRefreshModel.Text = "&Refresh Model"
+        '
         'frmMain
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -625,4 +633,5 @@ Partial Class frmMain
     Friend WithEvents ToolStripMenuItem3 As ToolStripSeparator
     Friend WithEvents mnuToolsPreferences As ToolStripMenuItem
     Friend WithEvents mnuToolsChangeUpAxis As ToolStripMenuItem
+    Friend WithEvents mnuFileRefreshModel As ToolStripMenuItem
 End Class
