@@ -34,7 +34,6 @@ Partial Class frmMain
         Me.MenuStrip1 = New System.Windows.Forms.MenuStrip()
         Me.mnuFile = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFileOpen = New System.Windows.Forms.ToolStripMenuItem()
-        Me.mnuFileReload = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripMenuItem2 = New System.Windows.Forms.ToolStripSeparator()
         Me.mnuFileExport = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuFilePrintPreview = New System.Windows.Forms.ToolStripMenuItem()
@@ -205,7 +204,7 @@ Partial Class frmMain
         '
         'mnuFile
         '
-        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.mnuFileReload, Me.ToolStripMenuItem2, Me.mnuFileExport, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
+        Me.mnuFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.mnuFileOpen, Me.ToolStripMenuItem2, Me.mnuFileExport, Me.mnuFilePrintPreview, Me.ToolStripMenuItem1, Me.mnuFileExit})
         Me.mnuFile.Name = "mnuFile"
         Me.mnuFile.Size = New System.Drawing.Size(37, 20)
         Me.mnuFile.Text = "&File"
@@ -213,44 +212,37 @@ Partial Class frmMain
         'mnuFileOpen
         '
         Me.mnuFileOpen.Name = "mnuFileOpen"
-        Me.mnuFileOpen.Size = New System.Drawing.Size(152, 22)
+        Me.mnuFileOpen.Size = New System.Drawing.Size(180, 22)
         Me.mnuFileOpen.Text = "&Open..."
-        '
-        'mnuFileReload
-        '
-        Me.mnuFileReload.Enabled = False
-        Me.mnuFileReload.Name = "mnuFileReload"
-        Me.mnuFileReload.Size = New System.Drawing.Size(152, 22)
-        Me.mnuFileReload.Text = "&Reload..."
         '
         'ToolStripMenuItem2
         '
         Me.ToolStripMenuItem2.Name = "ToolStripMenuItem2"
-        Me.ToolStripMenuItem2.Size = New System.Drawing.Size(149, 6)
+        Me.ToolStripMenuItem2.Size = New System.Drawing.Size(177, 6)
         '
         'mnuFileExport
         '
         Me.mnuFileExport.Enabled = False
         Me.mnuFileExport.Name = "mnuFileExport"
-        Me.mnuFileExport.Size = New System.Drawing.Size(152, 22)
+        Me.mnuFileExport.Size = New System.Drawing.Size(180, 22)
         Me.mnuFileExport.Text = "&Export..."
         '
         'mnuFilePrintPreview
         '
         Me.mnuFilePrintPreview.Enabled = False
         Me.mnuFilePrintPreview.Name = "mnuFilePrintPreview"
-        Me.mnuFilePrintPreview.Size = New System.Drawing.Size(152, 22)
+        Me.mnuFilePrintPreview.Size = New System.Drawing.Size(180, 22)
         Me.mnuFilePrintPreview.Text = "P&rint Preview..."
         '
         'ToolStripMenuItem1
         '
         Me.ToolStripMenuItem1.Name = "ToolStripMenuItem1"
-        Me.ToolStripMenuItem1.Size = New System.Drawing.Size(149, 6)
+        Me.ToolStripMenuItem1.Size = New System.Drawing.Size(177, 6)
         '
         'mnuFileExit
         '
         Me.mnuFileExit.Name = "mnuFileExit"
-        Me.mnuFileExit.Size = New System.Drawing.Size(152, 22)
+        Me.mnuFileExit.Size = New System.Drawing.Size(180, 22)
         Me.mnuFileExit.Text = "E&xit"
         '
         'mnuTools
@@ -598,7 +590,6 @@ Partial Class frmMain
     Friend WithEvents MenuStrip1 As MenuStrip
     Friend WithEvents mnuFile As ToolStripMenuItem
     Friend WithEvents mnuFileOpen As ToolStripMenuItem
-    Friend WithEvents mnuFileReload As ToolStripMenuItem
     Friend WithEvents ToolStripMenuItem2 As ToolStripSeparator
     Friend WithEvents mnuFileExport As ToolStripMenuItem
     Friend WithEvents mnuFilePrintPreview As ToolStripMenuItem

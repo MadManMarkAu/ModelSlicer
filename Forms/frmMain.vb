@@ -23,10 +23,6 @@ Public Class frmMain
         End Using
     End Sub
 
-    Private Sub mnuFileReload_Click(sender As Object, e As EventArgs) Handles mnuFileReload.Click
-        ReloadModelFile()
-    End Sub
-
     Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
         If _selectedObject IsNot Nothing Then
             tsslStatus.Text = "Slicing..."
@@ -188,12 +184,6 @@ Public Class frmMain
         lblTotalVolume.Text = FormatUnit(totalArea, SettingsContainer.Instance.DisplayUnits) & "³"
     End Sub
 
-    Private Sub ReloadModelFile()
-        If _fileName IsNot Nothing Then
-            OpenModelFile(_fileName)
-        End If
-    End Sub
-
     Private Sub OpenModelFile(fileName As String)
         Using importDialog As New frmImport
             importDialog.FileName = fileName
@@ -204,7 +194,6 @@ Public Class frmMain
 
                 _fileName = fileName
 
-                mnuFileReload.Enabled = True
                 mnuFileExport.Enabled = True
                 mnuFilePrintPreview.Enabled = True
                 mnuToolsChangeUnits.Enabled = True
