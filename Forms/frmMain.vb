@@ -30,11 +30,10 @@ Public Class frmMain
     Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
         If _selectedObject IsNot Nothing Then
             tsslStatus.Text = "Slicing..."
-            mnuFilePrintPreview.Enabled = False
 
             Using slicer As New frmSlicer
                 slicer.TriangleGroup = _selectedObject
-                slicer.Thickness = nudThickness.Value
+                slicer.Thickness = ConvertUnit(nudThickness.Value, Unit.Millimeter, _geometry.Units)
 
                 If slicer.ShowDialog(Me) = DialogResult.OK Then
                     ExportSlices(slicer.Result)
@@ -46,11 +45,10 @@ Public Class frmMain
     Private Sub mnuFilePrintPreview_Click(sender As Object, e As EventArgs) Handles mnuFilePrintPreview.Click
         If _selectedObject IsNot Nothing Then
             tsslStatus.Text = "Slicing..."
-            mnuFilePrintPreview.Enabled = False
 
             Using slicer As New frmSlicer
                 slicer.TriangleGroup = _selectedObject
-                slicer.Thickness = nudThickness.Value
+                slicer.Thickness = ConvertUnit(nudThickness.Value, Unit.Millimeter, _geometry.Units)
 
                 If slicer.ShowDialog(Me) = DialogResult.OK Then
                     PrintSlices(slicer.Result)
@@ -113,26 +111,9 @@ Public Class frmMain
         Call UpdateDisplay()
     End Sub
 
-    Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, xMin As Single, zMin As Single, layerName As String) As XmlElement
-        Dim layer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
-
-        layer.RemoveAllAttributes()
-        layer.SetAttribute("id", layerName)
-        For Each line As GeometryLine In lines.Lines
-            Dim svgLine As XmlElement = xmlDoc.CreateElement("line", "http://www.w3.org/2000/svg")
-            svgLine.SetAttribute("x1", (line.V1.X - xMin).ToString())
-            svgLine.SetAttribute("y1", (line.V1.Z - zMin).ToString())
-            svgLine.SetAttribute("x2", (line.V2.X - xMin).ToString())
-            svgLine.SetAttribute("y2", (line.V2.Z - zMin).ToString())
-            svgLine.SetAttribute("stroke", line.Color.Name)
-            layer.AppendChild(svgLine)
-        Next
-        Return layer
-    End Function
-
     Private Sub PrintSlices(layers As List(Of Layer))
         Using preview As New PrintPreviewDialog
-            Using llpdPrint As New LayerListPrintDocument(layers)
+            Using llpdPrint As New LayerListPrintDocument(layers, _geometry.Units)
                 preview.Document = llpdPrint
 
                 preview.ShowDialog(Me)
@@ -165,6 +146,23 @@ Public Class frmMain
             End If
         End Using
     End Sub
+
+    Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, xMin As Single, zMin As Single, layerName As String) As XmlElement
+        Dim layer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
+
+        layer.RemoveAllAttributes()
+        layer.SetAttribute("id", layerName)
+        For Each line As GeometryLine In lines.Lines
+            Dim svgLine As XmlElement = xmlDoc.CreateElement("line", "http://www.w3.org/2000/svg")
+            svgLine.SetAttribute("x1", (line.V1.X - xMin).ToString())
+            svgLine.SetAttribute("y1", (line.V1.Z - zMin).ToString())
+            svgLine.SetAttribute("x2", (line.V2.X - xMin).ToString())
+            svgLine.SetAttribute("y2", (line.V2.Z - zMin).ToString())
+            svgLine.SetAttribute("stroke", line.Color.Name)
+            layer.AppendChild(svgLine)
+        Next
+        Return layer
+    End Function
 
     Private Sub LoadModelStats()
         Dim units As Unit
