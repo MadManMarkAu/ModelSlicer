@@ -25,6 +25,9 @@ Public Class SettingsContainer
     Public Property DisplayUnits As DisplayUnit = DisplayUnit.Millimeter
     Public Property LastModelOpenDir As String = String.Empty
     Public Property LastSvgExportDir As String = String.Empty
+    Public Property ImportUseDefaults As Boolean = False
+    Public Property ImportDefaultUnits As Unit = Unit.Millimeter
+    Public Property ImportDefaultUpAxis As Axis = Axis.Y
 
 #End Region
 

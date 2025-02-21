@@ -32,6 +32,7 @@ Partial Class frmImport
         Me.rbUpX = New System.Windows.Forms.RadioButton()
         Me.butImport = New System.Windows.Forms.Button()
         Me.butCancel = New System.Windows.Forms.Button()
+        Me.chkDoNotAsk = New System.Windows.Forms.CheckBox()
         Me.GroupBox1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -144,6 +145,16 @@ Partial Class frmImport
         Me.butCancel.Text = "&Cancel"
         Me.butCancel.UseVisualStyleBackColor = True
         '
+        'chkDoNotAsk
+        '
+        Me.chkDoNotAsk.AutoSize = True
+        Me.chkDoNotAsk.Location = New System.Drawing.Point(12, 121)
+        Me.chkDoNotAsk.Name = "chkDoNotAsk"
+        Me.chkDoNotAsk.Size = New System.Drawing.Size(107, 17)
+        Me.chkDoNotAsk.TabIndex = 7
+        Me.chkDoNotAsk.Text = "&Do not ask again"
+        Me.chkDoNotAsk.UseVisualStyleBackColor = True
+        '
         'frmImport
         '
         Me.AcceptButton = Me.butImport
@@ -151,6 +162,7 @@ Partial Class frmImport
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.CancelButton = Me.butCancel
         Me.ClientSize = New System.Drawing.Size(322, 152)
+        Me.Controls.Add(Me.chkDoNotAsk)
         Me.Controls.Add(Me.butCancel)
         Me.Controls.Add(Me.butImport)
         Me.Controls.Add(Me.GroupBox1)
@@ -182,4 +194,5 @@ Partial Class frmImport
     Friend WithEvents rbUpX As RadioButton
     Friend WithEvents butImport As Button
     Friend WithEvents butCancel As Button
+    Friend WithEvents chkDoNotAsk As CheckBox
 End Class

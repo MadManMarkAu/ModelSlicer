@@ -249,26 +249,32 @@ Public Class frmMain
     End Sub
 
     Private Sub OpenModelFile(fileName As String)
-        Using importDialog As New frmImport
-            importDialog.FileName = fileName
-            If importDialog.ShowDialog(Me) = DialogResult.OK Then
+        If SettingsContainer.Instance.ImportUseDefaults Then
+            _geometry = Geometry.LoadWavefrontObj(_fileName, SettingsContainer.Instance.ImportDefaultUnits, SettingsContainer.Instance.ImportDefaultUpAxis)
+        Else
+            Using importDialog As New frmImport
+                importDialog.FileName = fileName
+                If importDialog.ShowDialog(Me) <> DialogResult.OK Then
+                    Return
+                End If
+
                 _geometry = importDialog.Result
+            End Using
+        End If
 
-                LoadModelStats()
+        LoadModelStats()
 
-                _fileName = fileName
+        _fileName = fileName
 
-                mnuFileRefreshModel.Enabled = True
-                mnuFileExport.Enabled = True
-                mnuFilePrintPreview.Enabled = True
-                mnuToolsChangeUnits.Enabled = True
-                mnuToolsChangeUpAxis.Enabled = True
+        mnuFileRefreshModel.Enabled = True
+        mnuFileExport.Enabled = True
+        mnuFilePrintPreview.Enabled = True
+        mnuToolsChangeUnits.Enabled = True
+        mnuToolsChangeUpAxis.Enabled = True
 
-                Text = $"Slicer - {Path.GetFileName(_fileName)}"
+        Text = $"Slicer - {Path.GetFileName(_fileName)}"
 
-                lbObjects.DataSource = _geometry.Groups
-            End If
-        End Using
+        lbObjects.DataSource = _geometry.Groups
     End Sub
 
     Private Sub RefreshModelFile()

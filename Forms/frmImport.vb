@@ -42,6 +42,13 @@ Public Class frmImport
 
         _result = Geometry.LoadWavefrontObj(_fileName, loadUnit, upAxis)
 
+        If chkDoNotAsk.Checked Then
+            SettingsContainer.Instance.ImportUseDefaults = True
+            SettingsContainer.Instance.ImportDefaultUnits = loadUnit
+            SettingsContainer.Instance.ImportDefaultUpAxis = upAxis
+            SettingsContainer.Instance.Save()
+        End If
+
         DialogResult = DialogResult.OK
         Close()
     End Sub
