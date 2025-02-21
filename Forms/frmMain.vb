@@ -250,7 +250,7 @@ Public Class frmMain
 
     Private Sub OpenModelFile(fileName As String)
         If SettingsContainer.Instance.ImportUseDefaults Then
-            _geometry = Geometry.LoadWavefrontObj(_fileName, SettingsContainer.Instance.ImportDefaultUnits, SettingsContainer.Instance.ImportDefaultUpAxis)
+            _geometry = Geometry.LoadWavefrontObj(fileName, SettingsContainer.Instance.ImportDefaultUnits, SettingsContainer.Instance.ImportDefaultUpAxis)
         Else
             Using importDialog As New frmImport
                 importDialog.FileName = fileName

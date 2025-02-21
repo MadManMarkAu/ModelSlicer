@@ -11,10 +11,16 @@
 
     Private Sub LoadPreferences()
         cmbDisplayUnits.SelectedIndex = SettingsContainer.Instance.DisplayUnits
+        chkImportUseDefaults.Checked = SettingsContainer.Instance.ImportUseDefaults
+        cmbImportDefaultUnits.SelectedIndex = SettingsContainer.Instance.ImportDefaultUnits
+        cmbImportDefaultUpAxis.SelectedIndex = SettingsContainer.Instance.ImportDefaultUpAxis
     End Sub
 
     Private Sub SavePreferences()
         SettingsContainer.Instance.DisplayUnits = cmbDisplayUnits.SelectedIndex
+        SettingsContainer.Instance.ImportUseDefaults = chkImportUseDefaults.Checked
+        SettingsContainer.Instance.ImportDefaultUnits = cmbImportDefaultUnits.SelectedIndex
+        SettingsContainer.Instance.ImportDefaultUpAxis = cmbImportDefaultUpAxis.SelectedIndex
         SettingsContainer.Instance.Save()
     End Sub
 End Class
