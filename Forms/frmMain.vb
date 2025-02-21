@@ -17,8 +17,11 @@ Public Class frmMain
         Using ofdOpen As New OpenFileDialog
             ofdOpen.Title = "Open Model File"
             ofdOpen.Filter = "Wavefront OBJ Files|*.obj|All Files (*.*)|*.*"
+            ofdOpen.InitialDirectory = SettingsContainer.Instance.LastModelOpenDir
             If ofdOpen.ShowDialog(Me) = DialogResult.OK Then
                 OpenModelFile(ofdOpen.FileName)
+                SettingsContainer.Instance.LastModelOpenDir = Path.GetDirectoryName(ofdOpen.FileName)
+                SettingsContainer.Instance.Save()
             End If
         End Using
     End Sub
@@ -118,45 +121,98 @@ Public Class frmMain
     End Sub
 
     Private Sub ExportSlices(layers As List(Of Layer))
+        Dim svgNs As XNamespace
+        Dim xmlDoc As XDocument
+        Dim xMin As Single
+        Dim zMin As Single
+        Dim xMax As Single
+        Dim zMax As Single
+        Dim savePath As String
+        Dim fileNameBase As String
+        Dim layer As Layer
+
         Using saveDialog As New SaveFileDialog
-            saveDialog.FileName = "Select the folder to save SVG files"
+            saveDialog.Title = "Select the folder to save SVG files"
+            saveDialog.Filter = "SVG files|*.svg|All Files (*.*)|*.*"
+            saveDialog.DefaultExt = ".svg"
+            saveDialog.InitialDirectory = SettingsContainer.Instance.LastSvgExportDir
             If saveDialog.ShowDialog() = DialogResult.OK Then
-                Dim selectedPath As String = Path.GetDirectoryName(saveDialog.FileName)
+                savePath = Path.GetDirectoryName(saveDialog.FileName)
+                fileNameBase = Path.GetFileNameWithoutExtension(saveDialog.FileName)
 
-                For Each layer As Layer In layers
-                    Dim xmlDoc As New XmlDocument()
-                    Dim svgRoot As XmlElement = xmlDoc.CreateElement("svg", "http://www.w3.org/2000/svg")
-                    xmlDoc.AppendChild(svgRoot)
+                For layerIndex As Integer = 0 To layers.Count - 1
+                    layer = layers(layerIndex)
 
-                    Dim xMin As Single = layer.Bounds.Minimum.X
-                    Dim zMin As Single = layer.Bounds.Minimum.Z
+                    xMin = ConvertUnit(layer.Bounds.Minimum.X, _geometry.Units, Unit.Inch) * 96 ' 96 DPI
+                    zMin = ConvertUnit(layer.Bounds.Minimum.Z, _geometry.Units, Unit.Inch) * 96
+                    xMax = ConvertUnit(layer.Bounds.Maximum.X, _geometry.Units, Unit.Inch) * 96
+                    zMax = ConvertUnit(layer.Bounds.Maximum.Z, _geometry.Units, Unit.Inch) * 96
 
-                    Dim svgLayerTop As XmlElement = ConvertLayerToSvg(xmlDoc, layer.TopOutline, xMin, zMin, "top")
-                    svgRoot.AppendChild(svgLayerTop)
+                    svgNs = "http://www.w3.org/2000/svg"
 
-                    Dim svgLayerBottom As XmlElement = ConvertLayerToSvg(xmlDoc, layer.BottomOutline, xMin, zMin, "bottom")
-                    svgRoot.AppendChild(svgLayerBottom)
+                    xmlDoc = New XDocument(
+                        New XElement(svgNs + "svg",
+                            New XAttribute("width", xMax - xMin),
+                            New XAttribute("height", zMax - zMin),
+                            ConvertFillLayertoSvg(layer.Contents, xMin, zMin, "top", "gray"),
+                            ConvertOutlineLayerToSvg(layer.TopOutline, xMin, zMin, "top", "red"),
+                            ConvertOutlineLayerToSvg(layer.BottomOutline, xMin, zMin, "bottom", "blue")
+                        )
+                    )
 
-                    xmlDoc.Save(Path.Combine(selectedPath, "layer" & layers.IndexOf(layer) & ".svg"))
+                    xmlDoc.Save(Path.Combine(savePath, $"{fileNameBase} (Layer {layerIndex}).svg"))
                 Next
+
+                SettingsContainer.Instance.LastSvgExportDir = savePath
+                SettingsContainer.Instance.Save()
             End If
         End Using
     End Sub
 
-    Private Function ConvertLayerToSvg(xmlDoc As XmlDocument, lines As GeometryLineGroup, xMin As Single, zMin As Single, layerName As String) As XmlElement
-        Dim layer As XmlElement = xmlDoc.CreateElement("g", "http://www.w3.org/2000/svg")
+    Private Function ConvertFillLayertoSvg(tris As GeometryTriangleGroup, xMin As Single, zMin As Single, layerName As String, color As String) As XElement
+        Dim ns As XNamespace
+        Dim layer As XElement
+        Dim svgTri As XElement
+        Dim points As String
 
-        layer.RemoveAllAttributes()
-        layer.SetAttribute("id", layerName)
-        For Each line As GeometryLine In lines.Lines
-            Dim svgLine As XmlElement = xmlDoc.CreateElement("line", "http://www.w3.org/2000/svg")
-            svgLine.SetAttribute("x1", (line.V1.X - xMin).ToString())
-            svgLine.SetAttribute("y1", (line.V1.Z - zMin).ToString())
-            svgLine.SetAttribute("x2", (line.V2.X - xMin).ToString())
-            svgLine.SetAttribute("y2", (line.V2.Z - zMin).ToString())
-            svgLine.SetAttribute("stroke", line.Color.Name)
-            layer.AppendChild(svgLine)
+        ns = "http://www.w3.org/2000/svg"
+        layer = New XElement(ns + "g", New XAttribute("id", layerName))
+        For Each tri As GeometryTriangle In tris.Triangles
+            points =
+                $"{ConvertUnit(tri.V1.X, _geometry.Units, Unit.Inch) * 96 - xMin},{ConvertUnit(tri.V1.Z, _geometry.Units, Unit.Inch) * 96 - zMin}" +
+                " " +
+                $"{ConvertUnit(tri.V2.X, _geometry.Units, Unit.Inch) * 96 - xMin},{ConvertUnit(tri.V2.Z, _geometry.Units, Unit.Inch) * 96 - zMin}" +
+                " " +
+                $"{ConvertUnit(tri.V3.X, _geometry.Units, Unit.Inch) * 96 - xMin},{ConvertUnit(tri.V3.Z, _geometry.Units, Unit.Inch) * 96 - zMin}"
+
+            svgTri = New XElement(ns + "polygon",
+                New XAttribute("points", points),
+                New XAttribute("style", $"fill:{color};stroke:{color}")
+            )
+
+            layer.Add(svgTri)
         Next
+
+        Return layer
+    End Function
+
+    Private Function ConvertOutlineLayerToSvg(lines As GeometryLineGroup, xMin As Single, zMin As Single, layerName As String, color As String) As XElement
+        Dim ns As XNamespace
+        Dim layer As XElement
+        Dim svgLine As XElement
+
+        ns = "http://www.w3.org/2000/svg"
+        layer = New XElement(ns + "g", New XAttribute("id", layerName))
+        For Each line As GeometryLine In lines.Lines
+            svgLine = New XElement(ns + "line")
+            svgLine.Add(New XAttribute("x1", ConvertUnit(line.V1.X, _geometry.Units, Unit.Inch) * 96 - xMin))
+            svgLine.Add(New XAttribute("y1", ConvertUnit(line.V1.Z, _geometry.Units, Unit.Inch) * 96 - zMin))
+            svgLine.Add(New XAttribute("x2", ConvertUnit(line.V2.X, _geometry.Units, Unit.Inch) * 96 - xMin))
+            svgLine.Add(New XAttribute("y2", ConvertUnit(line.V2.Z, _geometry.Units, Unit.Inch) * 96 - zMin))
+            svgLine.Add(New XAttribute("stroke", color))
+            layer.Add(svgLine)
+        Next
+
         Return layer
     End Function
 

@@ -23,6 +23,8 @@ Public Class SettingsContainer
 #Region " Settings properties go in this block. "
 
     Public Property DisplayUnits As DisplayUnit = DisplayUnit.Millimeter
+    Public Property LastModelOpenDir As String = String.Empty
+    Public Property LastSvgExportDir As String = String.Empty
 
 #End Region
 
