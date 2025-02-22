@@ -1,5 +1,4 @@
 ﻿Imports System.IO
-Imports System.Xml
 
 Public Class frmMain
     Private _geometry As Geometry
@@ -17,10 +16,10 @@ Public Class frmMain
         Using ofdOpen As New OpenFileDialog
             ofdOpen.Title = "Open Model File"
             ofdOpen.Filter = "Wavefront OBJ Files|*.obj|All Files (*.*)|*.*"
-            ofdOpen.InitialDirectory = SettingsContainer.Instance.LastModelOpenDir
+            ofdOpen.InitialDirectory = SettingsContainer.Instance.ImportLastOpenDir
             If ofdOpen.ShowDialog(Me) = DialogResult.OK Then
                 OpenModelFile(ofdOpen.FileName)
-                SettingsContainer.Instance.LastModelOpenDir = Path.GetDirectoryName(ofdOpen.FileName)
+                SettingsContainer.Instance.ImportLastOpenDir = Path.GetDirectoryName(ofdOpen.FileName)
                 SettingsContainer.Instance.Save()
             End If
         End Using
@@ -34,7 +33,10 @@ Public Class frmMain
     End Sub
 
 
-    Private Sub mnuFileExport_Click(sender As Object, e As EventArgs) Handles mnuFileExport.Click
+    Private Sub mnuFileExportToSvg_Click(sender As Object, e As EventArgs) Handles mnuFileExportToSvg.Click
+        Dim savePath As String
+        Dim fileNameBase As String
+
         If _selectedObject IsNot Nothing Then
             tsslStatus.Text = "Slicing..."
 
@@ -43,7 +45,44 @@ Public Class frmMain
                 slicer.Thickness = ConvertUnit(nudThickness.Value, Unit.Millimeter, _geometry.Units)
 
                 If slicer.ShowDialog(Me) = DialogResult.OK Then
-                    ExportSlices(slicer.Result)
+                    ' Slicing complete.
+
+                    If SettingsContainer.Instance.ExportSvgUseDefaults Then
+                        ' No export dialog.
+
+                        Using saveDialog As New SaveFileDialog
+                            saveDialog.Title = "Select the folder to save SVG files"
+                            saveDialog.Filter = "SVG files|*.svg|All Files (*.*)|*.*"
+                            saveDialog.DefaultExt = ".svg"
+                            saveDialog.InitialDirectory = SettingsContainer.Instance.ExportSvgLastExportDir
+                            If saveDialog.ShowDialog() = DialogResult.OK Then
+                                savePath = Path.GetDirectoryName(saveDialog.FileName)
+                                fileNameBase = Path.GetFileNameWithoutExtension(saveDialog.FileName)
+
+                                ExportSlicesToSvg(slicer.Result, savePath, fileNameBase, _geometry.Units,
+                                                  SettingsContainer.Instance.ExportSvgIncludeTop,
+                                                  SettingsContainer.Instance.ExportSvgIncludeFill,
+                                                  SettingsContainer.Instance.ExportSvgIncludeBottom,
+                                                  SettingsContainer.Instance.ExportSvgColorTop,
+                                                  SettingsContainer.Instance.ExportSvgColorFill,
+                                                  SettingsContainer.Instance.ExportSvgColorBottom)
+
+                                SettingsContainer.Instance.ExportSvgLastExportDir = savePath
+                                SettingsContainer.Instance.Save()
+
+                                If MessageBox.Show(Me, "Export complete. Open output folder?", "Export", MessageBoxButtons.YesNo, MessageBoxIcon.Information) = DialogResult.Yes Then
+                                    Process.Start(New ProcessStartInfo() With {.FileName = savePath, .UseShellExecute = True, .Verb = "open"})
+                                End If
+                            End If
+                        End Using
+                    Else
+                        ' Use export dialog.
+                        Using export As New frmExportSvg
+                            export.Layers = slicer.Result
+                            export.Units = _geometry.Units
+                            export.ShowDialog(Me)
+                        End Using
+                    End If
                 End If
             End Using
         End If
@@ -127,102 +166,6 @@ Public Class frmMain
             End Using
         End Using
     End Sub
-
-    Private Sub ExportSlices(layers As List(Of Layer))
-        Dim svgNs As XNamespace
-        Dim xmlDoc As XDocument
-        Dim xMin As Single
-        Dim zMin As Single
-        Dim xMax As Single
-        Dim zMax As Single
-        Dim savePath As String
-        Dim fileNameBase As String
-        Dim layer As Layer
-
-        Using saveDialog As New SaveFileDialog
-            saveDialog.Title = "Select the folder to save SVG files"
-            saveDialog.Filter = "SVG files|*.svg|All Files (*.*)|*.*"
-            saveDialog.DefaultExt = ".svg"
-            saveDialog.InitialDirectory = SettingsContainer.Instance.LastSvgExportDir
-            If saveDialog.ShowDialog() = DialogResult.OK Then
-                savePath = Path.GetDirectoryName(saveDialog.FileName)
-                fileNameBase = Path.GetFileNameWithoutExtension(saveDialog.FileName)
-
-                For layerIndex As Integer = 0 To layers.Count - 1
-                    layer = layers(layerIndex)
-
-                    xMin = ConvertUnit(layer.Bounds.Minimum.X, _geometry.Units, Unit.Inch) * 96 ' 96 DPI
-                    zMin = ConvertUnit(layer.Bounds.Minimum.Z, _geometry.Units, Unit.Inch) * 96
-                    xMax = ConvertUnit(layer.Bounds.Maximum.X, _geometry.Units, Unit.Inch) * 96
-                    zMax = ConvertUnit(layer.Bounds.Maximum.Z, _geometry.Units, Unit.Inch) * 96
-
-                    svgNs = "http://www.w3.org/2000/svg"
-
-                    xmlDoc = New XDocument(
-                        New XElement(svgNs + "svg",
-                            New XAttribute("width", xMax - xMin),
-                            New XAttribute("height", zMax - zMin),
-                            ConvertFillLayertoSvg(layer.Contents, xMin, zMin, "top", "gray"),
-                            ConvertOutlineLayerToSvg(layer.TopOutline, xMin, zMin, "top", "red"),
-                            ConvertOutlineLayerToSvg(layer.BottomOutline, xMin, zMin, "bottom", "blue")
-                        )
-                    )
-
-                    xmlDoc.Save(Path.Combine(savePath, $"{fileNameBase} (Layer {layerIndex}).svg"))
-                Next
-
-                SettingsContainer.Instance.LastSvgExportDir = savePath
-                SettingsContainer.Instance.Save()
-            End If
-        End Using
-    End Sub
-
-    Private Function ConvertFillLayertoSvg(tris As GeometryTriangleGroup, xMin As Single, zMin As Single, layerName As String, color As String) As XElement
-        Dim ns As XNamespace
-        Dim layer As XElement
-        Dim svgTri As XElement
-        Dim points As String
-
-        ns = "http://www.w3.org/2000/svg"
-        layer = New XElement(ns + "g", New XAttribute("id", layerName))
-        For Each tri As GeometryTriangle In tris.Triangles
-            points =
-                $"{ConvertUnit(tri.V1.X, _geometry.Units, Unit.Inch) * 96 - xMin},{ConvertUnit(tri.V1.Z, _geometry.Units, Unit.Inch) * 96 - zMin}" +
-                " " +
-                $"{ConvertUnit(tri.V2.X, _geometry.Units, Unit.Inch) * 96 - xMin},{ConvertUnit(tri.V2.Z, _geometry.Units, Unit.Inch) * 96 - zMin}" +
-                " " +
-                $"{ConvertUnit(tri.V3.X, _geometry.Units, Unit.Inch) * 96 - xMin},{ConvertUnit(tri.V3.Z, _geometry.Units, Unit.Inch) * 96 - zMin}"
-
-            svgTri = New XElement(ns + "polygon",
-                New XAttribute("points", points),
-                New XAttribute("style", $"fill:{color};stroke:{color}")
-            )
-
-            layer.Add(svgTri)
-        Next
-
-        Return layer
-    End Function
-
-    Private Function ConvertOutlineLayerToSvg(lines As GeometryLineGroup, xMin As Single, zMin As Single, layerName As String, color As String) As XElement
-        Dim ns As XNamespace
-        Dim layer As XElement
-        Dim svgLine As XElement
-
-        ns = "http://www.w3.org/2000/svg"
-        layer = New XElement(ns + "g", New XAttribute("id", layerName))
-        For Each line As GeometryLine In lines.Lines
-            svgLine = New XElement(ns + "line")
-            svgLine.Add(New XAttribute("x1", ConvertUnit(line.V1.X, _geometry.Units, Unit.Inch) * 96 - xMin))
-            svgLine.Add(New XAttribute("y1", ConvertUnit(line.V1.Z, _geometry.Units, Unit.Inch) * 96 - zMin))
-            svgLine.Add(New XAttribute("x2", ConvertUnit(line.V2.X, _geometry.Units, Unit.Inch) * 96 - xMin))
-            svgLine.Add(New XAttribute("y2", ConvertUnit(line.V2.Z, _geometry.Units, Unit.Inch) * 96 - zMin))
-            svgLine.Add(New XAttribute("stroke", color))
-            layer.Add(svgLine)
-        Next
-
-        Return layer
-    End Function
 
     Private Sub LoadModelStats()
         Dim units As Unit

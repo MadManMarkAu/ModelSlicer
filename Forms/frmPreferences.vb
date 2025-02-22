@@ -14,6 +14,13 @@
         chkImportUseDefaults.Checked = SettingsContainer.Instance.ImportUseDefaults
         cmbImportDefaultUnits.SelectedIndex = SettingsContainer.Instance.ImportDefaultUnits
         cmbImportDefaultUpAxis.SelectedIndex = SettingsContainer.Instance.ImportDefaultUpAxis
+        chkExportSvgUseDefaults.Checked = SettingsContainer.Instance.ExportSvgUseDefaults
+        chkExportSvgIncludeTop.Checked = SettingsContainer.Instance.ExportSvgIncludeTop
+        chkExportSvgIncludeFill.Checked = SettingsContainer.Instance.ExportSvgIncludeFill
+        chkExportSvgIncludeBottom.Checked = SettingsContainer.Instance.ExportSvgIncludeBottom
+        cpExportSvgColorTop.Value = SettingsContainer.Instance.ExportSvgColorTop
+        cpExportSvgColorFill.Value = SettingsContainer.Instance.ExportSvgColorFill
+        cpExportSvgColorBottom.Value = SettingsContainer.Instance.ExportSvgColorBottom
     End Sub
 
     Private Sub SavePreferences()
@@ -21,6 +28,13 @@
         SettingsContainer.Instance.ImportUseDefaults = chkImportUseDefaults.Checked
         SettingsContainer.Instance.ImportDefaultUnits = cmbImportDefaultUnits.SelectedIndex
         SettingsContainer.Instance.ImportDefaultUpAxis = cmbImportDefaultUpAxis.SelectedIndex
+        SettingsContainer.Instance.ExportSvgUseDefaults = chkExportSvgUseDefaults.Checked
+        SettingsContainer.Instance.ExportSvgIncludeTop = chkExportSvgIncludeTop.Checked
+        SettingsContainer.Instance.ExportSvgIncludeFill = chkExportSvgIncludeFill.Checked
+        SettingsContainer.Instance.ExportSvgIncludeBottom = chkExportSvgIncludeBottom.Checked
+        SettingsContainer.Instance.ExportSvgColorTop = cpExportSvgColorTop.Value
+        SettingsContainer.Instance.ExportSvgColorFill = cpExportSvgColorFill.Value
+        SettingsContainer.Instance.ExportSvgColorBottom = cpExportSvgColorBottom.Value
         SettingsContainer.Instance.Save()
     End Sub
 End Class

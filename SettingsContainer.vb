@@ -1,4 +1,5 @@
-﻿Imports System.IO
+﻿Imports System.Globalization
+Imports System.IO
 Imports System.Text
 Imports System.Xml.Serialization
 
@@ -22,13 +23,84 @@ Public Class SettingsContainer
 
 #Region " Settings properties go in this block. "
 
+    ' Display settings.
+
     Public Property DisplayUnits As DisplayUnit = DisplayUnit.Millimeter
-    Public Property LastModelOpenDir As String = String.Empty
-    Public Property LastSvgExportDir As String = String.Empty
+
+    ' Import settings.
+
+    Public Property ImportLastOpenDir As String = String.Empty
     Public Property ImportUseDefaults As Boolean = False
     Public Property ImportDefaultUnits As Unit = Unit.Millimeter
     Public Property ImportDefaultUpAxis As Axis = Axis.Y
 
+    ' SVG export settings.
+
+    Public Property ExportSvgLastExportDir As String = String.Empty
+
+    Public Property ExportSvgUseDefaults As Boolean = False
+
+    Public Property ExportSvgIncludeTop As Boolean = True
+
+    Public Property ExportSvgIncludeFill As Boolean = True
+
+    Public Property ExportSvgIncludeBottom As Boolean = True
+
+    <XmlIgnore> ' Do not store this property directly.
+    Public Property ExportSvgColorTop As Color = Color.Red
+
+    <XmlIgnore> ' Do not store this property directly.
+    Public Property ExportSvgColorFill As Color = Color.Gray
+
+    <XmlIgnore> ' Do not store this property directly.
+    Public Property ExportSvgColorBottom As Color = Color.Blue
+
+#End Region
+
+#Region " Serialization proxies "
+    ' Proxies will allow serialization of types that do not directly support serialization, by replacing the actual property that gets serialized.
+
+    <XmlElement("ExportSvgColorTop")>
+    Public Property Proxy_ExportSvgColorTop As String
+        Get
+            Return $"{ExportSvgColorTop.R:X2}{ExportSvgColorTop.G:X2}{ExportSvgColorTop.B:X2}"
+        End Get
+        Set(value As String)
+            Dim colorInt As Integer
+
+            If Integer.TryParse(value, NumberStyles.HexNumber, Nothing, colorInt) Then
+                ExportSvgColorTop = Color.FromArgb(colorInt Or &HFF000000) ' Force full opacity
+            End If
+        End Set
+    End Property
+
+    <XmlElement("ExportSvgColorFill")>
+    Public Property Proxy_ExportSvgColorFill As String
+        Get
+            Return $"{ExportSvgColorFill.R:X2}{ExportSvgColorFill.G:X2}{ExportSvgColorFill.B:X2}"
+        End Get
+        Set(value As String)
+            Dim colorInt As Integer
+
+            If Integer.TryParse(value, NumberStyles.HexNumber, Nothing, colorInt) Then
+                ExportSvgColorFill = Color.FromArgb(colorInt Or &HFF000000) ' Force full opacity
+            End If
+        End Set
+    End Property
+
+    <XmlElement("ExportSvgColorBottom")>
+    Public Property Proxy_ExportSvgColorBottom As String
+        Get
+            Return $"{ExportSvgColorBottom.R:X2}{ExportSvgColorBottom.G:X2}{ExportSvgColorBottom.B:X2}"
+        End Get
+        Set(value As String)
+            Dim colorInt As Integer
+
+            If Integer.TryParse(value, NumberStyles.HexNumber, Nothing, colorInt) Then
+                ExportSvgColorBottom = Color.FromArgb(colorInt Or &HFF000000) ' Force full opacity
+            End If
+        End Set
+    End Property
 #End Region
 
     Public Sub Save()

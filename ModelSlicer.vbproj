@@ -85,6 +85,12 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\ColorPicker.Designer.vb">
+      <DependentUpon>ColorPicker.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\ColorPicker.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="Controls\Direct3D\ModelDisplay.vb">
       <SubType>Component</SubType>
     </Compile>
@@ -103,6 +109,12 @@
       <DependentUpon>frmChangeUpAxis.vb</DependentUpon>
     </Compile>
     <Compile Include="Forms\frmChangeUpAxis.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmExportSvg.Designer.vb">
+      <DependentUpon>frmExportSvg.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmExportSvg.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\frmImport.Designer.vb">
@@ -143,6 +155,7 @@
     <Compile Include="Geometry\Vector2.vb" />
     <Compile Include="Geometry\Vector3.vb" />
     <Compile Include="modGeneral.vb" />
+    <Compile Include="modSvg.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -169,11 +182,17 @@
     <Compile Include="SettingsContainer.vb" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Controls\ColorPicker.resx">
+      <DependentUpon>ColorPicker.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmChangeUnits.resx">
       <DependentUpon>frmChangeUnits.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmChangeUpAxis.resx">
       <DependentUpon>frmChangeUpAxis.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmExportSvg.resx">
+      <DependentUpon>frmExportSvg.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmImport.resx">
       <DependentUpon>frmImport.vb</DependentUpon>
