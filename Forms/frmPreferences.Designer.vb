@@ -379,9 +379,9 @@ Partial Class frmPreferences
         Me.Label8.Location = New System.Drawing.Point(23, 200)
         Me.Label8.Margin = New System.Windows.Forms.Padding(3, 3, 3, 0)
         Me.Label8.Name = "Label8"
-        Me.Label8.Size = New System.Drawing.Size(118, 13)
+        Me.Label8.Size = New System.Drawing.Size(119, 13)
         Me.Label8.TabIndex = 9
-        Me.Label8.Text = "Bypass Import Window:"
+        Me.Label8.Text = "Bypass Export Window:"
         '
         'chkExportSvgUseDefaults
         '
