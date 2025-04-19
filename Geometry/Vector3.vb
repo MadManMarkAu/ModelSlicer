@@ -53,7 +53,7 @@ Public Structure Vector3
     End Function
 
     Public Overrides Function ToString() As String
-        Return $"X={X}, Y={Y}, Z={Z}"
+        Return $"X={X:0.00000}, Y={Y:0.00000}, Z={Z:0.00000}"
     End Function
 
     Public Shared Function Normalize(vec As Vector3) As Vector3

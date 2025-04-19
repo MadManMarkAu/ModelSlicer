@@ -216,6 +216,11 @@
         Dim ratio As Single
 
         lineDir = linePoint2 - linePoint1
+
+        If lineDir.LengthSquared() < 0.000001 Then
+            Return (False, Nothing, Nothing) ' Zero length is invalid
+        End If
+
         lineDirNormalized = Vector3.Normalize(lineDir)
 
         If Vector3.DotProduct(planeNormal, lineDirNormalized) = 0 Then
@@ -224,7 +229,7 @@
 
         distanceFromLineStart = (Vector3.DotProduct(planeNormal, planePoint) - Vector3.DotProduct(planeNormal, linePoint1)) / Vector3.DotProduct(planeNormal, lineDirNormalized)
 
-        If distanceFromLineStart < -0.0000001 OrElse distanceFromLineStart > lineDir.Length() + 0.0000001 Then
+        If distanceFromLineStart < -0.000001 OrElse distanceFromLineStart > lineDir.Length() + 0.000001 Then
             Return (False, Nothing, Nothing) ' Line intersects plane before the start, or after the end
         End If
 

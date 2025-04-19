@@ -34,6 +34,10 @@
         Max = New Vector3(Math.Max(V1.X, V2.X), Math.Max(V1.Y, V2.Y), Math.Max(V1.Z, V2.Z))
     End Sub
 
+    Public Overrides Function ToString() As String
+        Return $"V1:{{{V1}}}, V2:{{{V2}}}, N:{{{LineNormal}}}"
+    End Function
+
     Public Shared Operator =(left As GeometryLine, right As GeometryLine) As Boolean
         Return left.V1 = right.V1 AndAlso left.V2 = right.V2 AndAlso left.Color = right.Color
     End Operator

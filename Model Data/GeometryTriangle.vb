@@ -41,4 +41,8 @@
         Min = New Vector3(Math.Min(V1.X, Math.Min(V2.X, V3.X)), Math.Min(V1.Y, Math.Min(V2.Y, V3.Y)), Math.Min(V1.Z, Math.Min(V2.Z, V3.Z)))
         Max = New Vector3(Math.Max(V1.X, Math.Max(V2.X, V3.X)), Math.Max(V1.Y, Math.Max(V2.Y, V3.Y)), Math.Max(V1.Z, Math.Max(V2.Z, V3.Z)))
     End Sub
+
+    Public Overrides Function ToString() As String
+        Return $"V1:{{{V1}}}, V2:{{{V2}}}, V3:{{{V3}}}, N:{{{SurfaceNormal}}}"
+    End Function
 End Structure

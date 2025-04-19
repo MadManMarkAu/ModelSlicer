@@ -98,6 +98,6 @@
     End Function
 
     Public Overrides Function ToString() As String
-        Return Name
+        Return $"{Name} ({Triangles.Count} triangles)"
     End Function
 End Class

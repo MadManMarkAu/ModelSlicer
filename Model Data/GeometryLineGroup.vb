@@ -39,6 +39,6 @@
     End Function
 
     Public Overrides Function ToString() As String
-        Return Name
+        Return $"{Name} ({Lines.Count} lines)"
     End Function
 End Class
