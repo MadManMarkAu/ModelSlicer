@@ -21,7 +21,7 @@
 
             topOutline = OutlineModelPlane(group, endPlanePoint, planeNormal, topColor)
             bottomOutline = OutlineModelPlane(group, startPlanePoint, planeNormal, bottomColor)
-            contents = ExtractBetweenPlanes(group, startPlanePoint, endPlanePoint, planeNormal).CloneWithColor(contentColor)
+            contents = ExtractBetweenPlanes(group, startPlanePoint, endPlanePoint, planeNormal).Between.CloneWithColor(contentColor)
 
             output.Add(New Layer(topOutline, bottomOutline, contents))
 
@@ -38,7 +38,7 @@
 
         topOutline = OutlineModelPlane(group, endPlanePoint, planeNormal, topColor)
         bottomOutline = OutlineModelPlane(group, startPlanePoint, planeNormal, bottomColor)
-        contents = ExtractBetweenPlanes(group, startPlanePoint, endPlanePoint, planeNormal).CloneWithColor(contentColor)
+        contents = ExtractBetweenPlanes(group, startPlanePoint, endPlanePoint, planeNormal).Between.CloneWithColor(contentColor)
 
         Return New Layer(topOutline, bottomOutline, contents)
     End Function
@@ -115,8 +115,15 @@
         Return output
     End Function
 
-    Public Shared Function ExtractBetweenPlanes(group As GeometryTriangleGroup, startPlanePoint As Vector3, endPlanePoint As Vector3, planeNormal As Vector3) As GeometryTriangleGroup
-        Return Bifurcate(Bifurcate(group, startPlanePoint, planeNormal).Above, endPlanePoint, planeNormal).Below
+    Public Shared Function ExtractBetweenPlanes(group As GeometryTriangleGroup, startPlanePoint As Vector3, endPlanePoint As Vector3, planeNormal As Vector3) As (Above As GeometryTriangleGroup, Between As GeometryTriangleGroup, Below As GeometryTriangleGroup)
+        Dim tSlice1 As (Above As GeometryTriangleGroup, Below As GeometryTriangleGroup)
+        Dim tSlice2 As (Above As GeometryTriangleGroup, Below As GeometryTriangleGroup)
+
+        ' For result of Bifurcate, .Below == above the plane, because plane normal points down (-y)
+        tSlice1 = Bifurcate(group, startPlanePoint, planeNormal)
+        tSlice2 = Bifurcate(tSlice1.Above, endPlanePoint, planeNormal)
+
+        Return (tSlice1.Below, tSlice2.Below, tSlice2.Above)
     End Function
 
     Public Shared Function Bifurcate(group As GeometryTriangleGroup, planePoint As Vector3, planeNormal As Vector3) As (Above As GeometryTriangleGroup, Below As GeometryTriangleGroup)

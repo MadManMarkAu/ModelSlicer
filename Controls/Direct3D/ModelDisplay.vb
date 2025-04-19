@@ -163,12 +163,17 @@ Public Class ModelDisplay
             _renderer.DirectionalLightColor = New Color3(0.75, 0.75, 0.75)
             _renderer.DirectionalLightDir = New Vector3(-1, -1, 1)
             _renderer.BeginFrame()
+            _renderer.ClearDepthBuffer()
             For Each ggGroup As GeometryGroup In _geometryGroups
-                _renderer.ClearDepthBuffer()
                 _renderer.EnableLighting = ggGroup.EnableLighting
                 If TypeOf ggGroup Is GeometryTriangleGroup Then
                     _renderer.DrawTriangles(DirectCast(ggGroup, GeometryTriangleGroup).Triangles.ToArray())
-                ElseIf TypeOf ggGroup Is GeometryLineGroup Then
+                End If
+            Next
+            _renderer.ClearDepthBuffer()
+            For Each ggGroup As GeometryGroup In _geometryGroups
+                _renderer.EnableLighting = ggGroup.EnableLighting
+                If TypeOf ggGroup Is GeometryLineGroup Then
                     _renderer.DrawLines(DirectCast(ggGroup, GeometryLineGroup).Lines.ToArray())
                 End If
             Next

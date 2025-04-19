@@ -278,10 +278,12 @@ Public Class frmMain
         Dim sliceStart As Vector3
         Dim sliceEnd As Vector3
         Dim sliceDir As Vector3
-        Dim slice As GeometryTriangleGroup
+        Dim slice As (Above As GeometryTriangleGroup, Between As GeometryTriangleGroup, Below As GeometryTriangleGroup)
         Dim mesher As MesherXYZ
-        Dim fullGeom As GeometryTriangleGroup
-        Dim sliceGeom As GeometryTriangleGroup
+        Dim geomFull As GeometryTriangleGroup
+        Dim geomAbove As GeometryTriangleGroup
+        Dim geomBetween As GeometryTriangleGroup
+        Dim geomBelow As GeometryTriangleGroup
         Dim sliceLines As GeometryLineGroup
         Dim endLines As GeometryLineGroup
         Dim startLines As GeometryLineGroup
@@ -298,19 +300,20 @@ Public Class frmMain
             slice = Slicer.ExtractBetweenPlanes(_selectedObject, sliceStart, sliceEnd, sliceDir)
             mesher = New MesherXYZ(_selectedObject)
 
-            fullGeom = _selectedObject.CloneWithColor(Color.LightGray)
-            sliceGeom = slice.CloneWithColor(Color.DarkGray)
-            sliceLines = slice.ToLineGroup(Color.Black)
-            endLines = Slicer.OutlineModelPlane(slice, sliceEnd, sliceDir, Color.Blue)
-            startLines = Slicer.OutlineModelPlane(slice, sliceStart, sliceDir, Color.Red)
+            geomFull = _selectedObject.CloneWithColor(Color.LightGray)
+            geomAbove = slice.Above.CloneWithColor(Color.LightGray)
+            geomBetween = slice.Between.CloneWithColor(Color.DarkGray)
+            geomBelow = slice.Below.CloneWithColor(Color.LightGray)
+            sliceLines = slice.Between.ToLineGroup(Color.Black)
+            endLines = Slicer.OutlineModelPlane(slice.Between, sliceEnd, sliceDir, Color.Blue)
+            startLines = Slicer.OutlineModelPlane(slice.Between, sliceStart, sliceDir, Color.Red)
             openingLines = mesher.CreateDisconnectedEdgesLineGroup(Color.Orange)
             silhouette = mesher.CreateSilhouette(sliceDir, Color.Green)
 
-            mdFront.SetDrawData(fullGeom, sliceGeom, endLines, startLines, openingLines)
-            mdRight.SetDrawData(fullGeom, sliceGeom, endLines, startLines, openingLines)
-            mdBottom.SetDrawData(fullGeom, sliceGeom, endLines, startLines, openingLines, silhouette)
-            'mdIso.SetDrawData(gtgFullGeom, gtgSliceGeom, glgSliceLines, glgEndLines, glgStartLines, glgOpeningLines)
-            mdIso.SetDrawData(fullGeom, sliceGeom, endLines, startLines, openingLines, silhouette)
+            mdFront.SetDrawData(geomAbove, geomBetween, geomBelow, endLines, startLines, openingLines)
+            mdRight.SetDrawData(geomAbove, geomBetween, geomBelow, endLines, startLines, openingLines)
+            mdBottom.SetDrawData(geomAbove, geomBetween, geomBelow, endLines, startLines, openingLines, silhouette)
+            mdIso.SetDrawData(geomAbove, geomBetween, geomBelow, endLines, startLines, openingLines, silhouette)
         Else
             mdFront.SetDrawData()
             mdRight.SetDrawData()

@@ -1,4 +1,6 @@
-﻿Public Class GeometryTriangleGroup
+﻿Imports SharpDX.DXGI
+
+Public Class GeometryTriangleGroup
     Inherits GeometryGroup
 
     Public ReadOnly Property Triangles As New List(Of GeometryTriangle)
