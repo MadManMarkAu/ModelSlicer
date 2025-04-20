@@ -120,6 +120,7 @@ Partial Class frmMain
         Me.nudThickness.Size = New System.Drawing.Size(206, 20)
         Me.nudThickness.TabIndex = 1
         Me.nudThickness.Value = New Decimal(New Integer() {10, 0, 0, 0})
+        Me.nudThickness.DecimalPlaces = 2
         '
         'Label1
         '
